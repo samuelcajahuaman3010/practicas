@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Basic Panel - jQuery EasyUI Demo</title>
+	<link rel="stylesheet" type="text/css" href="../../themes/default/easyui.css">
+	<link rel="stylesheet" type="text/css" href="../../themes/icon.css">
+	<link rel="stylesheet" type="text/css" href="../demo.css">
+	<script type="text/javascript" src="../../jquery.min.js"></script>
+	<script type="text/javascript" src="../../jquery.easyui.min.js"></script>
+</head>
+<body>
+	<h2>Basic Panel</h2>
+	<p>The panel is a container for other components or elements.</p>
+	
+	<div style="margin:20px 0 10px 0;">
+<a href="#" class="easyui-linkbutton" onclick="hacerclick();">Open</a>
+<a href="#" class="easyui-linkbutton" onclick="javascript:$('#p').panel('close')">Close</a>
+	</div>
+
+   <div id="p" class="easyui-panel" title="Load Panel Content" style="width:95%;height:200px;padding:10px;"
+            data-options="
+                tools:[{
+                    iconCls:'icon-reload',
+                    handler:function(){
+                       
+                    }
+                }]
+            ">
+    </div>
+
+</body>
+<script>
+	function hacerclick(){
+
+		 $('#p').panel('refresh', '_content.html');
+	}
+
+</script>
+</html>
