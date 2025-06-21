@@ -75,10 +75,10 @@ class ClassImagenes {
     
     if (data && data.total > 0) {
         // Encabezado con información
-        contenido += '<div style="background:#e8f5e9; padding:10px; border-radius:5px; margin-bottom:15px;">';
-        contenido += '<strong>Código de Barra:</strong> ' + data.barra + '<br>';
-        contenido += '<strong>Total de imágenes:</strong> ' + data.total;
-        contenido += '</div>';
+        //contenido += '<div style="background:#e8f5e9; padding:10px; border-radius:5px; margin-bottom:15px;">';
+        //contenido += '<strong>Código de Barra:</strong> ' + data.barra + '<br>';
+        //contenido += '<strong>Total de imágenes:</strong> ' + data.total;
+        //contenido += '</div>';
         
         // Contenedor principal
         contenido += '<div id="imageGallery" style="font-size: 0; padding: 2px;">';
@@ -89,11 +89,11 @@ class ClassImagenes {
             const colorInfo = ClassImagenes.leyendaColores[tipo] || ClassImagenes.leyendaColores['CARG'];
             
             // Contenedor para cada imagen con el color correspondiente
-            contenido += `<div style="display: inline-block; vertical-align: top; background: ${colorInfo.codigo}; border-radius: 5px; padding: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 14px;">`;
+            contenido += `<div style="display: inline-block; vertical-align: top; border: 2px solid ${colorInfo.codigo}; border-radius: 2px; padding: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 14px;">`;
             
             // Nombre del archivo con botón de eliminar
-            contenido += '<div style="margin-bottom: 8px; font-size: 12px; word-break: break-all; color: white;">';
-            contenido += '<button class="btn-delete" title="Eliminar imagen" onclick="ClassImagenes.getInstance().confirmDelete(\'' + encodeURIComponent(imagen.ruta) + '\', \'' + imagen.succodigo + '\', \'' + imagen.osenumero + '\', \'' + imagen.osccorrelativo + '\')">❌</button>';
+            contenido += '<div style="margin-bottom: 8px; font-size: 12px; word-break: break-all; color: black;">';
+            contenido += '<button class="btn-delete" title="Eliminar imagen" onclick="ClassImagenes.getInstance().confirmDelete(\'' + encodeURIComponent(imagen.ruta) + '\', \'' + imagen.succodigo + '\', \'' + imagen.osenumero + '\', \'' + imagen.osccorrelativo + '\')">❌</button><br>';
             contenido += ' ' + imagen.succodigo + imagen.osenumero + imagen.osccorrelativo;
             contenido += '</div>';
             
@@ -102,7 +102,7 @@ class ClassImagenes {
             contenido += 'data-original="' + imagen.ruta + '" ';
             contenido += 'alt="Imagen ' + (index + 1) + ' de ' + data.total + '" ';
             contenido += 'data-title="Sucursal: ' + imagen.succodigo + ' - OS: ' + imagen.osenumero + ' - Correlativo: ' + imagen.osccorrelativo + '" ';
-            contenido += 'style="max-width:100%; height: 150px; object-fit: contain; cursor: pointer; background: #fff; border: 1px solid #ddd; padding: 2px; display: block; margin:2px" ';
+            contenido += 'style=" height: 150px; object-fit: contain; cursor: pointer; background: #fff; border: 1px solid #ddd; padding: 2px; display: block; margin:2px" ';
             contenido += 'onerror="this.style.display=\'none\'">';
             
             contenido += '</div>';

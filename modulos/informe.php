@@ -18,7 +18,7 @@
 </head>
 <body>
 
-<div class="easyui-layout" style="width:30%;height:500px;">
+<div class="easyui-layout" style="width:90%;height:500px;">
         <div data-options="region:'north'" style="height:200px; padding: 10px;">
             
             <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add'" onclick="javascript:mostrarImagenes();">Mostar Imagen</a>
