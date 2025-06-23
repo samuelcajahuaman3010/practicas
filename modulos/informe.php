@@ -7,18 +7,35 @@
     <link rel="stylesheet" type="text/css" href="../themes/icon.css">
     <script type="text/javascript" src="../jquery.min.js"></script>
     <script type="text/javascript" src="../jquery.easyui.min.js"></script>
-
     <script type="text/javascript" src="js/informe.js"></script>
+    <script type="text/javascript" src="js/Imagenes.js"></script>
     <script type="text/javascript" src="js/jsclasejquieryui.js"></script>
-    
-    
+    <link rel="stylesheet" type="text/css" href="/demo.css">
+    <script type="text/javascript" src="../easyloader.js"></script>
     <!-- Viewer.js -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/viewerjs@1.11.6/dist/viewer.min.css">
     <script src="https://cdn.jsdelivr.net/npm/viewerjs@1.11.6/dist/viewer.min.js"></script>
 </head>
 <body>
+	<script>
+	
+		function load2(){
+			using(['dialog','messager'], function(){
+				$('#dd').dialog({
+					title:'Dialog',
+					width:600,
+					height:500
+				});
+				$.messager.show({
+					title:'info',
+					msg:'dialog created'
+				});
+			});
+		}
 
-<div class="easyui-layout" style="width:90%;height:500px;">
+	</script>
+
+<div class="easyui-layout" style="width:80%;height:500px;">
         <div data-options="region:'north'" style="height:200px; padding: 10px;">
             
             <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-add'" onclick="javascript:mostrarImagenes();">Mostar Imagen</a>
@@ -30,13 +47,22 @@
                 <div title="Imagenes" style="padding:10px"> 
                    
                         <input id="clsimg_dlltipo">
-                        <input id="clsimg_fileBox">                        
-                        <div id="imagenesContent">
+                        
+                            
+                            
+                        <div style="margin:10px 0;">
+		                    <a href="#" class="easyui-linkbutton" onclick="load2()">Subir Imagen</a>
+	                    </div>
+                        <div id= "dd">
+                            <input id="clsimg_fileBox"> 
+                 
+                       
+                    </div>
+                    <div id="imagenesContent">
                             <p style="text-align: center; color: #999; padding: 20px;">
                                 Haz clic en "Mostrar Imagen" para cargar las imágenes
                             </p>
-                        </div>
-
+                            </div>
                 </div>
 
                 <div title="My Documents" style="padding:10px">
@@ -64,4 +90,6 @@
 
         </div>
     </div>
+
+
 </html>

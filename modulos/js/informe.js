@@ -88,7 +88,7 @@ class ClassImagenes {
             const tipo = imagen.tipo || 'CARG'; // Valor por defecto si no viene tipo
             const colorInfo = ClassImagenes.leyendaColores[tipo] || ClassImagenes.leyendaColores['CARG'];
             
-            // Contenedor para cada imagen con el color correspondiente
+            // Contenedor para cada imagen con el color de borde correspondiente
             contenido += `<div style="display: inline-block; vertical-align: top; border: 2px solid ${colorInfo.codigo}; border-radius: 2px; padding: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 14px;">`;
             
             // Nombre del archivo con botón de eliminar
