@@ -63,7 +63,39 @@ class ClassImagenes {
     var contenido = '';
     const self = this; // Guardamos referencia a la instancia actual
     
-    // Mostrar leyenda primero
+    
+    
+    if (data && data.total > 0) {
+        
+
+        contenido += '<div id="imageGallery" style="font-size: 0; padding: 15px;">';
+        
+       $.each(data.rows, function(index, imagen) {
+    // Determinar color basado en el tipo de imagen
+   const tipo = imagen.tipo || 'CARG'; // Valor por defecto si no viene tipo
+    const colorInfo = ClassImagenes.leyendaColores[tipo] || ClassImagenes.leyendaColores['CARG'];
+    
+    // Contenedor para cada imagen con el color de borde correspondiente
+    contenido += `<div style="display: inline-block; vertical-align: top; border: 2px solid ${colorInfo.codigo}; border-radius: 2px; padding: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 14px; margin: 5px;">`;
+    
+    // Nombre del archivo con botón de eliminar
+    contenido += '<div style="margin-bottom: 8px; font-size: 12px; word-break: break-all; color: black;">';
+    contenido += '<button class="btn-delete" title="Eliminar imagen" onclick="ClassImagenes.getInstance().confirmDelete(\'' + encodeURIComponent(imagen.ruta) + '\', \'' + imagen.succodigo + '\', \'' + imagen.osenumero + '\', \'' + imagen.osccorrelativo + '\')">❌</button><br>';
+    contenido += '</div>';
+    
+    // La imagen
+    contenido += '<img src="' + imagen.ruta + '" ';
+    contenido += 'data-original="' + imagen.ruta + '" ';
+    contenido += 'alt="Imagen ' + (index + 1) + ' de ' + data.total + '" ';
+    contenido += 'data-title="Sucursal: ' + imagen.succodigo + ' - OS: ' + imagen.osenumero + ' - Correlativo: ' + imagen.osccorrelativo + '" ';
+    contenido += 'style="height: 150px; object-fit: contain; cursor: pointer; background: #fff; border: 1px solid #ddd; padding: 2px; display: block; margin:2px" ';
+    contenido += 'onerror="this.style.display=\'none\'">';
+    
+    
+    contenido += '</div>';
+});
+   
+// Mostrar leyenda primero
     contenido += '<div class="leyenda-container" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px;">';
     Object.entries(ClassImagenes.leyendaColores).forEach(([key, item]) => {
         contenido += `<div style="display: flex; align-items: center; margin-right: 15px;">
@@ -72,41 +104,15 @@ class ClassImagenes {
         </div>`;
     });
     contenido += '</div>';
-    
-    if (data && data.total > 0) {
-        
 
-        contenido += '<div id="imageGallery" style="font-size: 0; padding: 2px;">';
-        
-        $.each(data.rows, function(index, imagen) {
-            // Determinar color basado en el tipo de imagen
-            const tipo = imagen.tipo || 'CARG'; // Valor por defecto si no viene tipo
-            const colorInfo = ClassImagenes.leyendaColores[tipo] || ClassImagenes.leyendaColores['CARG'];
-            
-            // Contenedor para cada imagen con el color de borde correspondiente
-            contenido += `<div style="display: inline-block; vertical-align: top; border: 2px solid ${colorInfo.codigo}; border-radius: 2px; padding: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 14px;">`;
-            
-            // Nombre del archivo con botón de eliminar
-            contenido += '<div style="margin-bottom: 8px; font-size: 12px; word-break: break-all; color: black;">';
-            contenido += '<button class="btn-delete" title="Eliminar imagen" onclick="ClassImagenes.getInstance().confirmDelete(\'' + encodeURIComponent(imagen.ruta) + '\', \'' + imagen.succodigo + '\', \'' + imagen.osenumero + '\', \'' + imagen.osccorrelativo + '\')">❌</button><br>';
-            contenido += '</div>';
-            
-            // La imagen
-            contenido += '<img src="' + imagen.ruta + '" ';
-            contenido += 'data-original="' + imagen.ruta + '" ';
-            contenido += 'alt="Imagen ' + (index + 1) + ' de ' + data.total + '" ';
-            contenido += 'data-title="Sucursal: ' + imagen.succodigo + ' - OS: ' + imagen.osenumero + ' - Correlativo: ' + imagen.osccorrelativo + '" ';
-            contenido += 'style=" height: 150px; object-fit: contain; cursor: pointer; background: #fff; border: 1px solid #ddd; padding: 2px; display: block; margin:2px" ';
-            contenido += 'onerror="this.style.display=\'none\'">';
-            
-            contenido += '</div>';
-        });
-        
-        contenido += '</div>';
+contenido += '</div>';     
+       
     } else {
         contenido = '<div style="background: #ffebee; padding: 10px; border-radius: 5px;">No se encontraron imágenes para mostrar.</div>';
     }
     
+
+
     $('#imagenesContent').html(contenido);
     this.inicializarViewer();
 }
