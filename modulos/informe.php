@@ -24,9 +24,8 @@
                    <div style="">
 						<a href="javascript:void(0)" id ="SubirImg"class="easyui-linkbutton" onclick="$('#w').window('open')">Subir Imagenes</a>
 				   </div>			
-		           <div id="w" class="easyui-window" title="Basic Window" data-options="iconCls:'icon-save', closed:true" style="width:50%;height:700px;padding:10px;">				
+		           <div id="w" class="easyui-window" title="Subir imagenes" data-options="iconCls:'icon-save', closed:true" style="width:50%;height:700px;padding:10px; margin:center;">				
 						<div class="container">
-							
 							<h2>Seleccionar Imagen</h2>
 							<input id="clsimg_dlltipo">
 							<div class="file-selector">
@@ -34,7 +33,6 @@
 								</div>
 							 	<button type="button" class="easyui-linkbutton" id="browseBtn" style="display: none;"></button>
 						 	</div>
-							
         						<input type="file" id="hiddenFileInput" class="easyui-linkbutton"  accept="image/*">
         						<div id="errorMessage" class="error-message"></div>
 									<div id="previewSection" class="preview-section">

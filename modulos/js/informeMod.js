@@ -102,6 +102,7 @@ class ClassImagenes {
 
     confirmDelete(imagePath, sucursal, osNumero, correlativo) {
         if (confirm('¿Está seguro que desea eliminar esta imagen?\n\n' +
+            'Ruta' + imagePath + '\n' +
             'Sucursal: ' + sucursal + '\n' +
             'OS: ' + osNumero + '\n' +
             'Correlativo: ' + correlativo)) {
@@ -268,11 +269,19 @@ class ImageProcessor {
 
         try {
             $('#previewImage').attr('src', this.selectedImageBase64);
+             //Vamos a mostrar la img al momento de selecionar una imagen desde de la computadora
+            $("#previewImage").css({
+                "display" :  "block",
+                "margin" : "0 auto"
+            });
 
             const sizeKB = Math.round(this.selectedImageData.size / 1024);
             const sizeMB = (this.selectedImageData.size / (1024 * 1024)).toFixed(2);
             const displaySize = sizeKB > 1024 ? `${sizeMB} MB` : `${sizeKB} KB`;
-
+            // ragamos la metadatos de la imagen que hemos seleccionado
+            if (sizeMB == 5){
+                alert('¡El archivo es demasiadon grande El tamaño maximo permitido es de 5 Mb');
+            } 
             const info = `
                 <strong>✓ Imagen cargada exitosamente</strong><br>
                 <strong>Archivo:</strong> ${this.selectedImageData.name}<br>
@@ -397,7 +406,7 @@ $(document).ready(function() {
         "width" : "150px",
         "font-family": "Arial, sans-serif",
         "font-size": "16px",
-        "margin": "10px 0 0 90%", // Usa unidades fijas (px)
+        "margin": "10px 0 0 85%", // Usa unidades fijas (px)
         "padding": "10px",
         "background": "#ebfeff",
         "border-radius": "5px",
@@ -415,7 +424,13 @@ $(document).ready(function() {
         "border-radius": "5px",
         "border": "1px solid #0078bc"
     });
-  
+  //Estamos oculatando la el img al momento de recargar 
+    $("#previewImage").css({
+            "display"   : "none",
+            "border"    : "1px solid #000",
+            "max-width" : "100%",
+            "max-height": "300px"    
+    });
 
 });
 
