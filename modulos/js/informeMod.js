@@ -40,7 +40,7 @@ class ClassImagenes {
         });
     }
     jsmostrarimagen() {
-        var adata = { ciacodigo: '11', barcode: '00300250600000001' };
+        var adata = { ciacodigo: '11', barcode: '00300250506000004' };
         var strUrl = "https://sistema.easyenvios.com/dmenvios/index.php/conimagenes/bdregimagenes";
         $.ajax({
             url: strUrl,
@@ -58,51 +58,55 @@ class ClassImagenes {
     }
 
     mostrarImagenes(data) {
-        var contenido = '';
-        const self = this;
+    var contenido = '';
+    const self = this;
 
-        if (data && data.total > 0) {
-            contenido += '<div id="imageGallery" style="font-size: 0; padding: 15px;">';
+    if (data && data.total > 0) {
+        // Abrir div principal
+        contenido += '<div id="imageGallery" style="font-size: 12; padding: 15px;">';
 
-            $.each(data.rows, function (index, imagen) {
-                const tipo = imagen.tipo || 'CARG';
-                const colorInfo = ClassImagenes.leyendaColores[tipo] || ClassImagenes.leyendaColores['CARG'];
-
-                contenido += `<div style="display: inline-block; vertical-align: top; border: 2px solid ${colorInfo.codigo}; border-radius: 2px; padding: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 14px; margin: -3% 0 0 0%;">`;
-                contenido += '<div style="margin-bottom: 8px; font-size: 12px; word-break: break-all; color: black;">';
-                contenido += '<button class="btn-delete" title="Eliminar imagen" onclick="ClassImagenes.getInstance().confirmDelete(\'' + encodeURIComponent(imagen.ruta) + '\', \'' + imagen.succodigo + '\', \'' + imagen.osenumero + '\', \'' + imagen.osccorrelativo + '\')">❌</button><br>';
-                contenido += '</div>';
-                contenido += '<img src="' + imagen.ruta + '" ';
-                contenido += 'data-original="' + imagen.ruta + '" ';
-                contenido += 'alt="Imagen ' + (index + 1) + ' de ' + data.total + '" ';
-                contenido += 'data-title="Sucursal: ' + imagen.succodigo + ' - OS: ' + imagen.osenumero + ' - Correlativo: ' + imagen.osccorrelativo + '" ';
-                contenido += 'style="height: 150px; object-fit: contain; cursor: pointer; background: #fff; border: 1px solid #ddd; padding: 2px; display: block; margin:2px" ';
-                contenido += 'onerror="this.style.display=\'none\'">';
-                contenido += '</div>';
-            });
-
-            // Mostrar leyenda
-            contenido += '<div class="leyenda-container" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px;">';
-            Object.entries(ClassImagenes.leyendaColores).forEach(([key, item]) => {
-                contenido += `<div style="display: flex; align-items: center; margin-right: 15px;">
-                    <div style="width: 20px; height: 20px; background: ${item.codigo}; margin-right: 5px; border: 1px solid #ddd;"></div>
-                    <span>${item.nombre}</span>
-                </div>`;
-            });
+        // Agregar imágenes
+        $.each(data.rows, function (index, imagen) {
+            var Doc = "CEL";
+            const tipo = imagen.tipo || Doc;
+            const colorInfo = ClassImagenes.leyendaColores[tipo] || ClassImagenes.leyendaColores[Doc];
+            
+            contenido += `<div style="display: inline-block; vertical-align: top; border: 2px solid ${colorInfo.codigo}; border-radius: 2px; padding: 1px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-size: 14px; margin: -3% 0 0 0%;">`;
+            contenido += '<div style="margin-bottom: 8px; font-size: 12px; word-break: break-all; color: black;">';
+            contenido += '<button class="btn-delete" title="Eliminar imagen" onclick="ClassImagenes.getInstance().confirmDelete(\'' + encodeURIComponent(imagen.ruta) + '\', \'' + imagen.succodigo + '\', \'' + imagen.osenumero + '\', \'' + imagen.osccorrelativo + '\')">❌</button><br>';
             contenido += '</div>';
-
+            contenido += '<img src="' + imagen.ruta + '" ';
+            contenido += 'data-original="' + imagen.ruta + '" ';
+            contenido += 'alt="Imagen ' + (index + 1) + ' de ' + data.total + '" ';
+            contenido += 'data-title="Sucursal: ' + imagen.succodigo + ' - OS: ' + imagen.osenumero + ' - Correlativo: ' + imagen.osccorrelativo + '" ';
+            contenido += 'style="height: 150px; object-fit: contain; cursor: pointer; background: #fff; border: 1px solid #ddd; padding: 2px; display: block; margin:2px" ';
+            contenido += 'onerror="this.style.display=\'none\'">';
             contenido += '</div>';
-        } else {
-            contenido = '<div style="background: #ffebee; padding: 10px; border-radius: 5px;">No se encontraron imágenes para mostrar.</div>';
-        }
+        });
 
-        $('#imagenesContent').html(contenido);
-        this.inicializarViewer();
+        // Agregar leyenda DENTRO del div principal
+        contenido += '<div class="leyenda-container" style="margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 10px; padding: 10px; background: #f5f5f5; border-radius: 5px;">';
+        Object.entries(ClassImagenes.leyendaColores).forEach(([key, item]) => {
+            contenido += `<div style="display: flex; align-items: center; margin-right: 15px;">
+                <div style="width: 20px; height: 20px; background: ${item.codigo}; margin-right: 5px; border: 1px solid #ddd;"></div>
+                <span style = "font-family: Arial, sans-serif;">${item.nombre}</span>
+            </div>`;
+        });
+                contenido += '</div>';
+        contenido += '</div>';
+        
+    } else {
+        contenido = '<div style="background: #ffebee; padding: 10px; border-radius: 5px;">No se encontraron imágenes para mostrar.</div>';
     }
+
+    // Insertar el contenido en el DOM
+    $('#imagenesContent').html(contenido);
+    this.inicializarViewer();
+}
 
     confirmDelete(imagePath, sucursal, osNumero, correlativo) {
         if (confirm('¿Está seguro que desea eliminar esta imagen?\n\n' +
-            'Ruta' + imagePath + '\n' +
+            'Ruta: ' + imagePath + '\n' +
             'Sucursal: ' + sucursal + '\n' +
             'OS: ' + osNumero + '\n' +
             'Correlativo: ' + correlativo)) {
@@ -275,13 +279,26 @@ class ImageProcessor {
                 "margin" : "0 auto"
             });
 
-            const sizeKB = Math.round(this.selectedImageData.size / 1024);
-            const sizeMB = (this.selectedImageData.size / (1024 * 1024)).toFixed(2);
-            const displaySize = sizeKB > 1024 ? `${sizeMB} MB` : `${sizeKB} KB`;
-            // ragamos la metadatos de la imagen que hemos seleccionado
-            if (sizeMB == 5){
-                alert('¡El archivo es demasiadon grande El tamaño maximo permitido es de 5 Mb');
-            } 
+           const sizeKB = Math.round(this.selectedImageData.size / 1024);
+            const sizeMB = this.selectedImageData.size / (1024 * 1024); // Mantenemos como número
+            const displaySize = sizeMB >= 1 ? `${sizeMB.toFixed(2)} MB` : `${sizeKB} KB`;
+
+                // Validación mejorada
+            if (sizeMB >= 5) {
+              $.messager.alert('Error', '¡El archivo es demasiado grande! El tamaño máximo permitido es de 5MB', 'error');
+             $("#previewImage").css({
+                "border": "6px solid #ff0000",
+                "margin" : "5% auto"
+            });
+
+        }
+                if (sizeMB <= 5) {
+                     $.messager.alert('Error', 'El archivo su tamaño esta permitido');
+                        $("#previewImage").css({
+                         "border": "6px solid #00ff00",
+                        "margin" : "5% auto"
+                     });    
+            }
             const info = `
                 <strong>✓ Imagen cargada exitosamente</strong><br>
                 <strong>Archivo:</strong> ${this.selectedImageData.name}<br>
@@ -292,6 +309,7 @@ class ImageProcessor {
 
             $('#previewSection').show();
             $('#buttonsSection').show();
+            
 
         } catch (error) {
             this.showError('Error al mostrar la previsualización: ' + error.message);
@@ -431,6 +449,7 @@ $(document).ready(function() {
             "max-width" : "100%",
             "max-height": "300px"    
     });
+   
 
 });
 
