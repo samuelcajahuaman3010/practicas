@@ -101,13 +101,13 @@ class ClassImagenes {
     inicializarViewer()
     {
 
-       if (imageViewer) {
-            imageViewer.destroy();
+       if (this.imageViewer) {
+            this.imageViewer.destroy();
         }
         
         const gallery = document.getElementById('imageGallery');
         if (gallery) {
-            imageViewer = new Viewer(gallery, {
+            this.imageViewer = new Viewer(gallery, {
                 title: function(image) {
                     return image.dataset.title || image.alt;
                 },
