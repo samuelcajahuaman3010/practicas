@@ -11,7 +11,21 @@ class ClassImagenes {
         }
         return ClassImagenes.instance;
     }
-    initialize(){                
+    initialize(){    
+        
+        this.miPanel = new EasyUIPanel('miPanelId', {
+            title: 'Mi Panel',
+            width: 400,
+            height: 300,
+            collapsible: true,
+            iconCls: 'icon-save'
+        });
+    alert(1);
+        
+        this.miPanel.setTitle('Nuevo título');
+        this.miPanel.append('<p>Nuevo contenido</p>');
+
+
          var paises=[{idpais:'PE',nompais:'PERU'},{idpais:'CL',nompais:'CHILE'},{idpais:'CO',nompais:'COLOMBIA'}];
          this.clsimg_dlltipo = new EasyComboBox('clsimg_dlltipo', {width:150,valueField:'idpais',textField: 'nompais',  data:paises});
 
@@ -219,14 +233,14 @@ class ClassImagenes {
     }*/
 
 function mostrarImagenes() {
-    const clsImagenes = ClassImagenes.getInstance();
-    clsImagenes.jsmostrarimagen();
+    //const clsImagenes = ClassImagenes.getInstance();
+    //clsImagenes.jsmostrarimagen();
 }
 
     $(document).ready(function() {
 
 
-        const clsImagenes = ClassImagenes.getInstance(); // Valida si esta instanciado
+       // const clsImagenes = ClassImagenes.getInstance(); // Valida si esta instanciado
         //clsEdicionOrden.abrir(poperacion,adata);
 
       

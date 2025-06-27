@@ -17,7 +17,18 @@ class EasyUIFileBox {
             maxFiles: 1,            // Número máximo de archivos
             validateExtension: true, // Validar extensiones de archivo
             allowedExtensions: [],   // Array de extensiones permitidas ['jpg', 'png', 'pdf']
-            showFileSize: true       // Mostrar tamaño del archivo
+            showFileSize: true,      // Mostrar tamaño del archivo
+            
+            // Eventos
+            onChange: null,
+            onSelect: null,
+            onProgress: null,
+            onLoadSuccess: null,
+            onLoadError: null,
+            onError: null,
+            onUploadStart: null,
+            onUploadSuccess: null,
+            onUploadError: null
         };
         
         this.options = { ...this.defaultOptions, ...options };
@@ -32,121 +43,180 @@ class EasyUIFileBox {
             return;
         }
 
-        element.filebox(this.options);
+        // Inicializar filebox con las opciones base
+        const initOptions = {
+            width: this.options.width,
+            height: this.options.height,
+            prompt: this.options.prompt,
+            buttonText: this.options.buttonText,
+            buttonAlign: this.options.buttonAlign,
+            accept: this.options.accept,
+            multiple: this.options.multiple,
+            separator: this.options.separator,
+            disabled: this.options.disabled,
+            readonly: this.options.readonly,
+            required: this.options.required
+        };
+
+        element.filebox(initOptions);
         this._setupEventHandlers();
     }
 
     _setupEventHandlers() {
         const element = $(`#${this.id}`);
         
-        // Evento onChange
-        if (typeof this.options.onChange === 'function') {
-            element.filebox({
-                onChange: (value) => {
-                    if (this._validateFile(value)) {
+        // Configurar evento onChange
+        element.filebox({
+            onChange: (value) => {
+                console.log('FileBox onChange triggered with value:', value);
+                
+                if (this._validateFile(value)) {
+                    if (typeof this.options.onChange === 'function') {
                         this.options.onChange(value, this.selectedFiles);
                     }
                 }
-            });
-        } else {
-            // Validación por defecto si no hay onChange
-            element.filebox({
-                onChange: (value) => {
-                    this._validateFile(value);
-                }
-            });
-        }
+            }
+        });
 
-        // Evento onSelect (cuando se selecciona archivo)
+        // Otros eventos si están definidos
         if (typeof this.options.onSelect === 'function') {
             element.filebox({
-                onSelect: (file) => {
-                    this.options.onSelect(file);
-                }
+                onSelect: this.options.onSelect
             });
         }
 
-        // Evento onProgress (durante la carga)
         if (typeof this.options.onProgress === 'function') {
             element.filebox({
-                onProgress: (percentage) => {
-                    this.options.onProgress(percentage);
-                }
+                onProgress: this.options.onProgress
             });
         }
 
-        // Evento onLoadSuccess
         if (typeof this.options.onLoadSuccess === 'function') {
             element.filebox({
-                onLoadSuccess: (data) => {
-                    this.options.onLoadSuccess(data);
-                }
+                onLoadSuccess: this.options.onLoadSuccess
             });
         }
 
-        // Evento onLoadError
         if (typeof this.options.onLoadError === 'function') {
             element.filebox({
-                onLoadError: () => {
-                    this.options.onLoadError();
-                }
+                onLoadError: this.options.onLoadError
             });
         }
     }
 
     _validateFile(value) {
-        if (!value) return true;
-
-        const fileInput = this.getFileInput();
-        const files = fileInput[0].files;
+        console.log('Validating file with value:', value);
         
-        // Validar número máximo de archivos
-        if (files.length > this.options.maxFiles) {
-            this._showError(`Máximo ${this.options.maxFiles} archivo(s) permitido(s)`);
-            this.clear();
-            return false;
+        if (!value) {
+            this.selectedFiles = [];
+            return true;
         }
 
-        // Validar cada archivo
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+        try {
+            // Método corregido para obtener el input de archivo
+            const fileInput = this._getActualFileInput();
             
-            // Validar tamaño
-            if (this.options.maxSize > 0 && file.size > this.options.maxSize) {
-                this._showError(`El archivo ${file.name} excede el tamaño máximo permitido (${this._formatFileSize(this.options.maxSize)})`);
+            if (!fileInput || !fileInput.files) {
+                console.warn('No se pudo obtener el input de archivo o files es null');
+                return true; // Permitir continuar si no se puede validar
+            }
+
+            const files = fileInput.files;
+            console.log('Files found:', files.length);
+            
+            // Validar número máximo de archivos
+            if (files.length > this.options.maxFiles) {
+                this._showError(`Máximo ${this.options.maxFiles} archivo(s) permitido(s)`);
                 this.clear();
                 return false;
             }
 
-            // Validar extensión
-            if (this.options.validateExtension && this.options.allowedExtensions.length > 0) {
-                const extension = file.name.split('.').pop().toLowerCase();
-                if (!this.options.allowedExtensions.includes(extension)) {
-                    this._showError(`Extensión no permitida: ${extension}. Extensiones válidas: ${this.options.allowedExtensions.join(', ')}`);
+            // Validar cada archivo
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                console.log('Validating file:', file.name, 'Size:', file.size);
+                
+                // Validar tamaño
+                if (this.options.maxSize > 0 && file.size > this.options.maxSize) {
+                    this._showError(`El archivo ${file.name} excede el tamaño máximo permitido (${this._formatFileSize(this.options.maxSize)})`);
                     this.clear();
                     return false;
                 }
+
+                // Validar extensión
+                if (this.options.validateExtension && this.options.allowedExtensions.length > 0) {
+                    const extension = file.name.split('.').pop().toLowerCase();
+                    if (!this.options.allowedExtensions.includes(extension)) {
+                        this._showError(`Extensión no permitida: ${extension}. Extensiones válidas: ${this.options.allowedExtensions.join(', ')}`);
+                        this.clear();
+                        return false;
+                    }
+                }
             }
+
+            // Guardar información de archivos seleccionados
+            this.selectedFiles = Array.from(files).map(file => ({
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                lastModified: file.lastModified,
+                formattedSize: this._formatFileSize(file.size)
+            }));
+
+            console.log('Files validated successfully:', this.selectedFiles);
+            return true;
+
+        } catch (error) {
+            console.error('Error during file validation:', error);
+            return true; // Permitir continuar en caso de error de validación
         }
+    }
 
-        // Guardar información de archivos seleccionados
-        this.selectedFiles = Array.from(files).map(file => ({
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            lastModified: file.lastModified,
-            formattedSize: this._formatFileSize(file.size)
-        }));
+    // Método corregido para obtener el input de archivo real
+    _getActualFileInput() {
+        try {
+            // Método 1: Buscar dentro del filebox wrapper
+            let fileInput = $(`#${this.id}`).next('.textbox').find('input[type="file"]');
+            
+            if (fileInput.length === 0) {
+                // Método 2: Buscar en el DOM cercano
+                fileInput = $(`#${this.id}`).parent().find('input[type="file"]');
+            }
+            
+            if (fileInput.length === 0) {
+                // Método 3: Buscar por clase específica de EasyUI
+                fileInput = $(`.textbox-f[data-for="${this.id}"]`).find('input[type="file"]');
+            }
+            
+            if (fileInput.length === 0) {
+                // Método 4: Buscar en toda la página elementos relacionados
+                fileInput = $('input[type="file"]').filter(function() {
+                    return $(this).closest('.textbox').prev('input').attr('id') === this.id;
+                }.bind(this));
+            }
 
-        return true;
+            console.log('FileInput found:', fileInput.length > 0 ? 'Yes' : 'No');
+            return fileInput.length > 0 ? fileInput[0] : null;
+            
+        } catch (error) {
+            console.error('Error getting file input:', error);
+            return null;
+        }
     }
 
     _showError(message) {
+        console.error('FileBox Error:', message);
+        
         if (typeof this.options.onError === 'function') {
             this.options.onError(message);
         } else {
-            // Mostrar error por defecto (puedes personalizar esto)
-            $.messager.alert('Error', message, 'error');
+            // Verificar si $.messager está disponible
+            if (typeof $.messager !== 'undefined') {
+                $.messager.alert('Error', message, 'error');
+            } else {
+                // Fallback a alert nativo
+                alert('Error: ' + message);
+            }
         }
     }
 
@@ -160,28 +230,49 @@ class EasyUIFileBox {
 
     // Obtener el valor (nombre del archivo)
     getValue() {
-        return $(`#${this.id}`).filebox('getValue');
+        try {
+            return $(`#${this.id}`).filebox('getValue');
+        } catch (error) {
+            console.error('Error getting value:', error);
+            return '';
+        }
     }
 
     // Establecer el valor (solo para mostrar, no selecciona archivo real)
     setValue(value) {
-        $(`#${this.id}`).filebox('setValue', value);
+        try {
+            $(`#${this.id}`).filebox('setValue', value);
+        } catch (error) {
+            console.error('Error setting value:', error);
+        }
     }
 
     // Limpiar la selección
     clear() {
-        $(`#${this.id}`).filebox('clear');
-        this.selectedFiles = [];
+        try {
+            $(`#${this.id}`).filebox('clear');
+            this.selectedFiles = [];
+        } catch (error) {
+            console.error('Error clearing filebox:', error);
+        }
     }
 
     // Habilitar el filebox
     enable() {
-        $(`#${this.id}`).filebox('enable');
+        try {
+            $(`#${this.id}`).filebox('enable');
+        } catch (error) {
+            console.error('Error enabling filebox:', error);
+        }
     }
 
     // Deshabilitar el filebox
     disable() {
-        $(`#${this.id}`).filebox('disable');
+        try {
+            $(`#${this.id}`).filebox('disable');
+        } catch (error) {
+            console.error('Error disabling filebox:', error);
+        }
     }
 
     // Establecer habilitado/deshabilitado
@@ -191,35 +282,56 @@ class EasyUIFileBox {
 
     // Establecer solo lectura
     setReadonly(readonly) {
-        $(`#${this.id}`).filebox('readonly', readonly);
+        try {
+            $(`#${this.id}`).filebox('readonly', readonly);
+        } catch (error) {
+            console.error('Error setting readonly:', error);
+        }
     }
 
     // Establecer el texto del prompt
     setPrompt(prompt) {
-        $(`#${this.id}`).filebox('setText', prompt);
+        try {
+            $(`#${this.id}`).filebox('setText', prompt);
+        } catch (error) {
+            console.error('Error setting prompt:', error);
+        }
     }
 
     // Establecer el texto del botón
     setButtonText(text) {
-        $(`#${this.id}`).filebox({
-            buttonText: text
-        });
+        try {
+            $(`#${this.id}`).filebox({
+                buttonText: text
+            });
+        } catch (error) {
+            console.error('Error setting button text:', error);
+        }
     }
 
     // Validar el filebox
     isValid() {
-        return $(`#${this.id}`).filebox('isValid');
+        try {
+            return $(`#${this.id}`).filebox('isValid');
+        } catch (error) {
+            console.error('Error checking validity:', error);
+            return true;
+        }
     }
 
     // Resetear a valor por defecto
     reset() {
-        $(`#${this.id}`).filebox('reset');
-        this.selectedFiles = [];
+        try {
+            $(`#${this.id}`).filebox('reset');
+            this.selectedFiles = [];
+        } catch (error) {
+            console.error('Error resetting filebox:', error);
+        }
     }
 
-    // Obtener el elemento input de archivo
+    // Obtener el elemento input de archivo (método público mejorado)
     getFileInput() {
-        return $(`#${this.id}`).filebox('textbox');
+        return this._getActualFileInput();
     }
 
     // Obtener el elemento jQuery principal
@@ -229,17 +341,35 @@ class EasyUIFileBox {
 
     // Establecer el foco
     focus() {
-        $(`#${this.id}`).filebox('textbox').focus();
+        try {
+            const textbox = $(`#${this.id}`).filebox('textbox');
+            if (textbox && textbox.length > 0) {
+                textbox.focus();
+            }
+        } catch (error) {
+            console.error('Error setting focus:', error);
+        }
     }
 
     // Remover el foco
     blur() {
-        $(`#${this.id}`).filebox('textbox').blur();
+        try {
+            const textbox = $(`#${this.id}`).filebox('textbox');
+            if (textbox && textbox.length > 0) {
+                textbox.blur();
+            }
+        } catch (error) {
+            console.error('Error removing focus:', error);
+        }
     }
 
     // Redimensionar el filebox
     resize(width) {
-        $(`#${this.id}`).filebox('resize', width);
+        try {
+            $(`#${this.id}`).filebox('resize', width);
+        } catch (error) {
+            console.error('Error resizing filebox:', error);
+        }
     }
 
     // Obtener información de archivos seleccionados
@@ -249,30 +379,43 @@ class EasyUIFileBox {
 
     // Obtener archivos nativos para upload
     getFiles() {
-        const fileInput = this.getFileInput();
-        return fileInput[0].files;
+        try {
+            const fileInput = this._getActualFileInput();
+            return fileInput ? fileInput.files : null;
+        } catch (error) {
+            console.error('Error getting files:', error);
+            return null;
+        }
     }
 
     // Establecer tipos de archivo aceptados
     setAccept(accept) {
-        this.options.accept = accept;
-        $(`#${this.id}`).filebox({
-            accept: accept
-        });
+        try {
+            this.options.accept = accept;
+            $(`#${this.id}`).filebox({
+                accept: accept
+            });
+        } catch (error) {
+            console.error('Error setting accept:', error);
+        }
     }
 
     // Configurar múltiples archivos
     setMultiple(multiple) {
-        this.options.multiple = multiple;
-        $(`#${this.id}`).filebox({
-            multiple: multiple
-        });
+        try {
+            this.options.multiple = multiple;
+            $(`#${this.id}`).filebox({
+                multiple: multiple
+            });
+        } catch (error) {
+            console.error('Error setting multiple:', error);
+        }
     }
 
     // Método para realizar upload (requiere configuración adicional del servidor)
     upload(url, additionalData = {}) {
         const files = this.getFiles();
-        if (files.length === 0) {
+        if (!files || files.length === 0) {
             this._showError('No hay archivos seleccionados para subir');
             return;
         }
@@ -315,7 +458,223 @@ class EasyUIFileBox {
             }
         });
     }
+
+    // Método para mostrar imagen en contenedor
+    displayImage(containerId, options = {}) {
+        const files = this.getFiles();
+        if (!files || files.length === 0) {
+            console.warn('No hay archivos para mostrar');
+            return false;
+        }
+
+        const file = files[0];
+        
+        // Verificar que sea una imagen
+        if (!file.type.startsWith('image/')) {
+            console.warn('El archivo no es una imagen');
+            return false;
+        }
+
+        const container = $(`#${containerId}`);
+        if (container.length === 0) {
+            console.error(`Contenedor con ID ${containerId} no encontrado`);
+            return false;
+        }
+
+        // Opciones por defecto para la imagen
+        const defaultImageOptions = {
+            maxWidth: '100%',
+            maxHeight: '300px',
+            border: '1px solid #ddd',
+            borderRadius: '4px',
+            objectFit: 'contain',
+            showFileName: true,
+            showFileSize: true,
+            showDimensions: true,
+            containerClass: 'image-preview-container',
+            imageClass: 'preview-image',
+            infoClass: 'image-info'
+        };
+
+        const imageOptions = { ...defaultImageOptions, ...options };
+
+        // Leer el archivo como Data URL
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            // Crear estructura HTML para mostrar la imagen
+            let html = `<div class="${imageOptions.containerClass}">`;
+            
+            // Imagen
+            html += `<img src="${e.target.result}" 
+                          class="${imageOptions.imageClass}"
+                          style="max-width: ${imageOptions.maxWidth}; 
+                                 max-height: ${imageOptions.maxHeight}; 
+                                 border: ${imageOptions.border}; 
+                                 border-radius: ${imageOptions.borderRadius};
+                                 object-fit: ${imageOptions.objectFit};
+                                 display: block;
+                                 margin: 0 auto;"
+                          alt="${file.name}" />`;
+            
+            // Información del archivo (si está habilitada)
+            if (imageOptions.showFileName || imageOptions.showFileSize || imageOptions.showDimensions) {
+                html += `<div class="${imageOptions.infoClass}" style="margin-top: 10px; padding: 8px; background: #f5f5f5; border-radius: 4px; font-size: 12px;">`;
+                
+                if (imageOptions.showFileName) {
+                    html += `<div><strong>Archivo:</strong> ${file.name}</div>`;
+                }
+                
+                if (imageOptions.showFileSize) {
+                    const fileInfo = this.selectedFiles[0];
+                    html += `<div><strong>Tamaño:</strong> ${fileInfo.formattedSize}</div>`;
+                }
+                
+                if (imageOptions.showDimensions) {
+                    // Crear imagen temporal para obtener dimensiones
+                    const tempImg = new Image();
+                    tempImg.onload = function() {
+                        $(`#${containerId} .${imageOptions.infoClass}`).append(
+                            `<div><strong>Dimensiones:</strong> ${this.width} x ${this.height} px</div>`
+                        );
+                    };
+                    tempImg.src = e.target.result;
+                }
+                
+                html += `</div>`;
+            }
+            
+            html += `</div>`;
+            
+            // Insertar en el contenedor
+            container.html(html);
+            
+            // Callback si se proporciona
+            if (typeof options.onImageLoaded === 'function') {
+                options.onImageLoaded(e.target.result, file);
+            }
+            
+        }.bind(this);
+
+        reader.onerror = function() {
+            console.error('Error leyendo el archivo');
+            container.html('<div style="color: red;">Error al cargar la imagen</div>');
+            
+            if (typeof options.onImageError === 'function') {
+                options.onImageError();
+            }
+        };
+
+        reader.readAsDataURL(file);
+        return true;
+    }
+
+    // Método para limpiar la preview de imagen
+    clearImagePreview(containerId) {
+        const container = $(`#${containerId}`);
+        if (container.length > 0) {
+            container.empty();
+        }
+    }
+
+    // Método para mostrar thumbnail pequeño
+    displayThumbnail(containerId, size = 100) {
+        return this.displayImage(containerId, {
+            maxWidth: `${size}px`,
+            maxHeight: `${size}px`,
+            showFileName: false,
+            showFileSize: false,
+            showDimensions: false,
+            border: '2px solid #007cba',
+            borderRadius: '8px'
+        });
+    }
+
+    // Método para mostrar múltiples imágenes (si multiple está habilitado)
+    displayAllImages(containerId, options = {}) {
+        const files = this.getFiles();
+        if (!files || files.length === 0) {
+            console.warn('No hay archivos para mostrar');
+            return false;
+        }
+
+        const container = $(`#${containerId}`);
+        if (container.length === 0) {
+            console.error(`Contenedor con ID ${containerId} no encontrado`);
+            return false;
+        }
+
+        container.empty();
+
+        // Mostrar cada imagen
+        Array.from(files).forEach((file, index) => {
+            if (file.type.startsWith('image/')) {
+                // Crear contenedor individual para cada imagen
+                const imageContainer = $(`<div id="${containerId}_image_${index}" class="individual-image-container" style="margin-bottom: 20px;"></div>`);
+                container.append(imageContainer);
+
+                // Simular un filebox temporal para cada imagen
+                const tempSelectedFiles = [{
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    lastModified: file.lastModified,
+                    formattedSize: this._formatFileSize(file.size)
+                }];
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const defaultOptions = {
+                        maxWidth: '200px',
+                        maxHeight: '200px',
+                        showFileName: true,
+                        showFileSize: true
+                    };
+                    const imgOptions = { ...defaultOptions, ...options };
+
+                    let html = `<div class="image-preview-container">`;
+                    html += `<img src="${e.target.result}" 
+                                  style="max-width: ${imgOptions.maxWidth}; 
+                                         max-height: ${imgOptions.maxHeight}; 
+                                         border: 1px solid #ddd; 
+                                         border-radius: 4px;
+                                         object-fit: contain;
+                                         display: block;
+                                         margin: 0 auto;"
+                                  alt="${file.name}" />`;
+                    
+                    if (imgOptions.showFileName || imgOptions.showFileSize) {
+                        html += `<div style="margin-top: 10px; padding: 8px; background: #f5f5f5; border-radius: 4px; font-size: 12px;">`;
+                        if (imgOptions.showFileName) html += `<div><strong>Archivo:</strong> ${file.name}</div>`;
+                        if (imgOptions.showFileSize) html += `<div><strong>Tamaño:</strong> ${tempSelectedFiles[0].formattedSize}</div>`;
+                        html += `</div>`;
+                    }
+                    html += `</div>`;
+                    
+                    imageContainer.html(html);
+                };
+
+                reader.readAsDataURL(file);
+            }
+        });
+
+        return true;
+    }
+
+    // Método para debugging - mostrar información del estado
+    debug() {
+        console.log('=== EasyUIFileBox Debug Info ===');
+        console.log('ID:', this.id);
+        console.log('Options:', this.options);
+        console.log('Selected Files:', this.selectedFiles);
+        console.log('Current Value:', this.getValue());
+        
+        const fileInput = this._getActualFileInput();
+        console.log('File Input Element:', fileInput);
+        console.log('File Input Files:', fileInput ? fileInput.files : 'No file input found');
+        console.log('================================');
+    }
 }
+
 
 
 class LoadingManager {
@@ -2318,5 +2677,343 @@ class EasyUICheckBox {
     // Destruir el checkbox
     destroy() {
         $(`#${this.id}`).checkbox('destroy');
+    }
+}
+
+class EasyUIPanel {
+    constructor(id, options = {}) {
+        this.id = id;
+        this.defaultOptions = {
+            // Propiedades básicas
+            title: '',
+            width: 'auto',
+            height: 'auto',
+            left: null,
+            top: null,
+            cls: null,
+            headerCls: null,
+            bodyCls: null,
+            style: {},
+            fit: false,
+            border: true,
+            doSize: true,
+            noheader: false,
+            content: null,
+            href: null,
+            cache: true,
+            loadingMessage: 'Loading...',
+            extractor: null,
+            
+            // Propiedades de estado
+            collapsible: false,
+            minimizable: false,
+            maximizable: false,
+            closable: false,
+            collapsed: false,
+            closed: false,
+            minimized: false,
+            maximized: false,
+            
+            // Propiedades adicionales
+            tools: null,
+            footer: null,
+            iconCls: null,
+            
+            // Eventos
+            onLoad: null,
+            onBeforeOpen: null,
+            onOpen: null,
+            onBeforeClose: null,
+            onClose: null,
+            onBeforeDestroy: null,
+            onDestroy: null,
+            onResize: null,
+            onMove: null,
+            onMaximize: null,
+            onRestore: null,
+            onMinimize: null,
+            onBeforeCollapse: null,
+            onBeforeExpand: null,
+            onCollapse: null,
+            onExpand: null
+        };
+        
+        this.options = { ...this.defaultOptions, ...options };
+        this.initialized = false;
+        
+        // Verificar si jQuery y EasyUI están disponibles
+        if (typeof $ === 'undefined') {
+            console.error('jQuery no está disponible');
+            return;
+        }
+        
+        if (typeof $.fn.panel === 'undefined') {
+            console.error('EasyUI Panel no está disponible');
+            return;
+        }
+        
+        // Inicializar después de que el DOM esté listo
+        if (document.readyState === 'loading') {
+            $(document).ready(() => {
+                this.initialize();
+            });
+        } else {
+            // Usar setTimeout para asegurar que el elemento esté disponible
+            setTimeout(() => {
+                this.initialize();
+            }, 0);
+        }
+    }
+
+    initialize() {
+        try {
+            // Verificar si el elemento existe
+            const element = $(`#${this.id}`);
+            if (element.length === 0) {
+                console.error(`Elemento con ID ${this.id} no encontrado`);
+                return false;
+            }
+
+            // Verificar si ya está inicializado como panel
+            if (element.hasClass('panel')) {
+                console.warn(`Panel ${this.id} ya está inicializado`);
+                return false;
+            }
+
+            // Limpiar cualquier inicialización previa de EasyUI
+            this._cleanupElement(element);
+
+            // Crear una copia limpia de las opciones
+            const cleanOptions = this._getCleanOptions();
+
+            // Inicializar el panel con easyUI
+            element.panel(cleanOptions);
+
+            this.initialized = true;
+            console.log(`Panel ${this.id} inicializado correctamente`);
+
+        } catch (error) {
+            console.error(`Error inicializando panel ${this.id}:`, error);
+            return false;
+        }
+    }
+
+    _cleanupElement(element) {
+        // Remover clases de EasyUI si existen
+        element.removeClass('panel panel-body panel-header');
+        
+        // Remover atributos data de EasyUI
+        element.removeAttr('data-options');
+        
+        // Si el elemento ya tenía wrapper, removerlo
+        if (element.parent().hasClass('panel')) {
+            const content = element.html();
+            element.parent().replaceWith(`<div id="${this.id}">${content}</div>`);
+        }
+    }
+
+    _getCleanOptions() {
+        // Crear una copia limpia de opciones, filtrando valores null/undefined
+        const cleanOptions = {};
+        
+        Object.keys(this.options).forEach(key => {
+            const value = this.options[key];
+            if (value !== null && value !== undefined) {
+                cleanOptions[key] = value;
+            }
+        });
+
+        return cleanOptions;
+    }
+
+    _checkInitialized() {
+        if (!this.initialized) {
+            console.warn(`Panel ${this.id} no está inicializado`);
+            return false;
+        }
+        return true;
+    }
+
+    // Método para abrir el panel
+    open() {
+        if (!this._checkInitialized()) return;
+        try {
+            $(`#${this.id}`).panel('open');
+        } catch (error) {
+            console.error(`Error abriendo panel ${this.id}:`, error);
+        }
+    }
+
+    // Método para cerrar el panel
+    close() {
+        if (!this._checkInitialized()) return;
+        try {
+            $(`#${this.id}`).panel('close');
+        } catch (error) {
+            console.error(`Error cerrando panel ${this.id}:`, error);
+        }
+    }
+
+    // Método para destruir el panel
+    destroy() {
+        if (!this._checkInitialized()) return;
+        try {
+            $(`#${this.id}`).panel('destroy');
+            this.initialized = false;
+        } catch (error) {
+            console.error(`Error destruyendo panel ${this.id}:`, error);
+        }
+    }
+
+    // Método para refrescar el panel
+    refresh(href) {
+        if (!this._checkInitialized()) return;
+        try {
+            if (href) {
+                $(`#${this.id}`).panel('refresh', href);
+            } else {
+                $(`#${this.id}`).panel('refresh');
+            }
+        } catch (error) {
+            console.error(`Error refrescando panel ${this.id}:`, error);
+        }
+    }
+
+    // Método para redimensionar el panel
+    resize(options) {
+        if (!this._checkInitialized()) return;
+        try {
+            if (options) {
+                $(`#${this.id}`).panel('resize', options);
+            } else {
+                $(`#${this.id}`).panel('resize');
+            }
+        } catch (error) {
+            console.error(`Error redimensionando panel ${this.id}:`, error);
+        }
+    }
+
+    // Método para colapsar el panel
+    collapse(animate = true) {
+        if (!this._checkInitialized()) return;
+        try {
+            $(`#${this.id}`).panel('collapse', animate);
+        } catch (error) {
+            console.error(`Error colapsando panel ${this.id}:`, error);
+        }
+    }
+
+    // Método para expandir el panel
+    expand(animate = true) {
+        if (!this._checkInitialized()) return;
+        try {
+            $(`#${this.id}`).panel('expand', animate);
+        } catch (error) {
+            console.error(`Error expandiendo panel ${this.id}:`, error);
+        }
+    }
+
+    // Método para establecer el título
+    setTitle(title) {
+        if (!this._checkInitialized()) return;
+        try {
+            $(`#${this.id}`).panel('setTitle', title);
+        } catch (error) {
+            console.error(`Error estableciendo título del panel ${this.id}:`, error);
+        }
+    }
+
+    // Método para establecer el contenido del panel
+    setContent(content) {
+        if (!this._checkInitialized()) return;
+        try {
+            $(`#${this.id}`).panel('clear');
+            $(`#${this.id}`).panel('append', content);
+        } catch (error) {
+            console.error(`Error estableciendo contenido del panel ${this.id}:`, error);
+        }
+    }
+
+    // Método para limpiar el contenido del panel
+    clear() {
+        if (!this._checkInitialized()) return;
+        try {
+            $(`#${this.id}`).panel('clear');
+        } catch (error) {
+            console.error(`Error limpiando panel ${this.id}:`, error);
+        }
+    }
+
+    // Método para agregar contenido al panel
+    append(content) {
+        if (!this._checkInitialized()) return;
+        try {
+            $(`#${this.id}`).panel('append', content);
+        } catch (error) {
+            console.error(`Error agregando contenido al panel ${this.id}:`, error);
+        }
+    }
+
+    // Método para obtener las opciones del panel
+    options() {
+        if (!this._checkInitialized()) return null;
+        try {
+            return $(`#${this.id}`).panel('options');
+        } catch (error) {
+            console.error(`Error obteniendo opciones del panel ${this.id}:`, error);
+            return null;
+        }
+    }
+
+    // Método para verificar si el panel está colapsado
+    isCollapsed() {
+        if (!this._checkInitialized()) return false;
+        try {
+            const opts = $(`#${this.id}`).panel('options');
+            return opts ? opts.collapsed : false;
+        } catch (error) {
+            console.error(`Error verificando estado colapsado del panel ${this.id}:`, error);
+            return false;
+        }
+    }
+
+    // Método para verificar si el panel está cerrado
+    isClosed() {
+        if (!this._checkInitialized()) return false;
+        try {
+            const opts = $(`#${this.id}`).panel('options');
+            return opts ? opts.closed : false;
+        } catch (error) {
+            console.error(`Error verificando estado cerrado del panel ${this.id}:`, error);
+            return false;
+        }
+    }
+
+    // Método para obtener el elemento jQuery
+    getElement() {
+        return $(`#${this.id}`);
+    }
+
+    // Método para verificar si está inicializado
+    isInitialized() {
+        return this.initialized;
+    }
+
+    // Método estático para verificar dependencias
+    static checkDependencies() {
+        const issues = [];
+        
+        if (typeof $ === 'undefined') {
+            issues.push('jQuery no está disponible');
+        }
+        
+        if (typeof $.fn.panel === 'undefined') {
+            issues.push('EasyUI Panel no está disponible');
+        }
+        
+        return {
+            valid: issues.length === 0,
+            issues: issues
+        };
     }
 }
