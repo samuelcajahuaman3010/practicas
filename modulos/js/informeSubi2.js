@@ -20,7 +20,7 @@ class ClassImagenes {
     }
 
     initialize() {
-        // ✅ INICIALIZAR COMBOBOX PRIMERO CON VALOR POR DEFECTO
+        // INICIALIZAR COMBOBOX PRIMERO CON VALOR POR DEFECTO
         var paises = [
             { idpais: 'CARG', nompais: 'CARGO' },
             { idpais: 'CEL', nompais: 'FOTOS DE CELULAR' },
@@ -44,30 +44,44 @@ class ClassImagenes {
         // FILEBOX
         this.miFileBox = new EasyUIFileBox('clsimg_filearchivo', {accept: 'image/*',maxSize: 5 * 1024 * 1024, allowedExtensions: ['jpg', 'jpeg', 'png', 'gif'], onChange: (value, files) => {             
             if (files && files.length > 0) {this.miFileBox.displayImage('contenedorImagen'); }}});
+        
         // BOTONES
         this.clsimg_bntcancelar = new LinkButton('clsimg_bntcancelar', {text: 'Cancelar',iconCls: 'icon-reload',iconAlign: 'left',height: 25,width: 150,onClick: () => {this.limpiarFormularioCompleto(); }});
         this.clsimg_bntterminar = new LinkButton('clsimg_bntterminar', {text: 'Cerrar',iconCls: 'icon-reload',iconAlign: 'left',height: 25,width: 150,onClick: () => {this.clsimg_wndsubirimagen.close();}});
+        
+        //BOTÓN ACEPTAR - MANTIENE this.subirImagen()
         this.clsimg_bntaceptar = new LinkButton('clsimg_bntaceptar', {text: 'Subir',iconCls: 'icon-save',iconAlign: 'left',height: 25,width: 150,onClick: () => {
             this.subirImagen();
-            
         }});
+        
         this.clsDialog_bntaceptar = new LinkButton('clsDialog_bntaceptar', {text: 'Confirmar',iconCls: 'icon-save',iconAlign: 'left',height: 25, width: 150,onClick: () => {
             this.confirmarSubida();
             this.clsdialg_wndDialogo.center();
         }});
-          this.clsDialog_bntcancelar = new LinkButton('clsDialog_bntcancelar', {text: 'Cancelar',iconCls: 'icon-reload',iconAlign: 'left',height: 25,width: 150, onClick: () => {
-            this.limpiarFormularioCompleto;
+        
+        //BOTÓN CANCELAR DEL DIÁLOGO 
+        this.clsDialog_bntcancelar = new LinkButton('clsDialog_bntcancelar', {text: 'Cancelar',iconCls: 'icon-reload',iconAlign: 'left',height: 25,width: 150, onClick: () => {
+            //LIMPIAR FORMULARIO COMPLETO
+            this.limpiarFormularioCompleto();
+            
+            //CERRAR EL DIÁLOGO
             this.clsdialg_wndDialogo.close();
         }});
+        
         // VENTANAS
         this.clsdialg_wndDialogo = new EasyUIWindow('clsdialg_wndDialogo', {title: ' Confirmar subida',iconCls: 'icon-load',width: '350',height: '200', maximizable: false,onClose: function() {},onOpen: function() {}});
         this.clsimg_wndsubirimagen = new EasyUIWindow('clsimg_wndsubirimagen', {title: ' Subir imagenes',iconCls: 'icon-load',width: '650',height: '330',maximizable: false,onClose: function() {},onOpen: function() {ClassImagenes.getInstance().clsimg_dlltipo.setValue('CEL');}});
         this.clsimg_btnmostrar = new LinkButton('clsimg_btnmostrar', {text: 'Cargar Imagenes',iconCls: 'icon-reload',iconAlign: 'left',height: 25,width: 150,onClick: () => {this.jsmostrarimagen();}});
+        
+        // BOTÓN SUBIR (QUE ABRE LA VENTANA) 
         this.clsimg_subirimagen = new LinkButton('clsimg_subirimagen', {text: 'Subir',iconCls: 'icon-save',iconAlign: 'left',height: 25,width: 80,onClick: () => {
-                this.clsimg_wndsubirimagen.center();
-                this.clsimg_wndsubirimagen.open();
-            }
-        });
+            // LIMPIAR FORMULARIO ANTES DE ABRIR LA VENTANA
+            this.limpiarFormularioCompleto();
+            
+            this.clsimg_wndsubirimagen.center();
+            this.clsimg_wndsubirimagen.open();
+        }});
+        
         this.clsimg_panel = new EasyUIPanel('clsimg_panel', {width: 800,height: 300});
     }
 
@@ -161,11 +175,12 @@ class ClassImagenes {
         }
     }
 
-    // ✅ MÉTODO MEJORADO PARA VALIDAR Y SUBIR IMAGEN
+
+    //MÉTODO MEJORADO PARA VALIDAR Y SUBIR IMAGEN
     subirImagen() {
         console.log('=== INICIANDO VALIDACIONES ===');
 
-        // ✅ VALIDACIÓN DEL ARCHIVO
+        // VALIDACIÓN DEL ARCHIVO
         const archivos = this.miFileBox.getFiles();
         console.log('Archivos encontrados:', archivos);
         
@@ -174,26 +189,26 @@ class ClassImagenes {
             return;
         }
 
-        // ✅ VALIDACIÓN DEL TIPO CON DEBUG MEJORADO
+        // VALIDACIÓN DEL TIPO CON DEBUG MEJORADO
         const tipoSeleccionado = this.clsimg_dlltipo.getValue();
         console.log('Tipo seleccionado (getValue()):', tipoSeleccionado);
         console.log('Tipo de dato:', typeof tipoSeleccionado);
         console.log('Es vacío?:', !tipoSeleccionado);
         
-        // ✅ VALIDACIÓN MÁS ROBUSTA
+        // VALIDACIÓN MÁS ROBUSTA
         if (!tipoSeleccionado || tipoSeleccionado === '' || tipoSeleccionado === null || tipoSeleccionado === undefined) {
             console.log('ERROR: No hay tipo seleccionado');
             
-            // ✅ INTENTAR OBTENER EL VALOR DE OTRA FORMA
+            // INTENTAR OBTENER EL VALOR DE OTRA FORMA
             const valorAlternativo = $('#clsimg_dlltipo').combobox('getValue');
             console.log('Valor alternativo:', valorAlternativo);
             
             if (!valorAlternativo) {
-                // ✅ ESTABLECER VALOR POR DEFECTO Y CONTINUAR
+                // ESTABLECER VALOR POR DEFECTO Y CONTINUAR
                 console.log('Estableciendo valor por defecto: CEL');
                 this.clsimg_dlltipo.setValue('CEL');
                 
-                // ✅ ESPERAR UN MOMENTO Y VERIFICAR NUEVAMENTE
+                // ESPERAR UN MOMENTO Y VERIFICAR NUEVAMENTE
                 setTimeout(() => {
                     const nuevoValor = this.clsimg_dlltipo.getValue();
                     console.log('Nuevo valor después del setValue:', nuevoValor);
@@ -217,13 +232,13 @@ class ClassImagenes {
         this.continuarSubida(tipoSeleccionado, archivos[0]);
     }
 
-    // ✅ MÉTODO SEPARADO PARA CONTINUAR CON LA SUBIDA
+    // MÉTODO SEPARADO PARA CONTINUAR CON LA SUBIDA
     continuarSubida(tipoSeleccionado, archivo) {
         console.log('Continuando subida con tipo:', tipoSeleccionado);
         
-        // ✅ OBTENER CORRELATIVO Y MOSTRAR DATOS EN EL DIÁLOGO
+        // OBTENER CORRELATIVO Y MOSTRAR DATOS EN EL DIÁLOGO
         this.obtenerProximoCorrelativo((proximoCorrelativo) => {
-            // ✅ MOSTRAR DATOS EN EL DIÁLOGO
+            // MOSTRAR DATOS EN EL DIÁLOGO
             const datosParaMostrar = `
                 <div style="margin-bottom: 15px;">
                     <strong>¿Deseas subir la foto seleccionada?</strong>
@@ -236,10 +251,10 @@ class ClassImagenes {
                 </div>
             `;
             
-            // ✅ ACTUALIZAR CONTENIDO DEL DIÁLOGO
+            // ACTUALIZAR CONTENIDO DEL DIÁLOGO
             $('#clsdialg_wndDialogo').html(datosParaMostrar);
             
-            // ✅ GUARDAR DATOS PARA USAR EN confirmarSubida
+            // GUARDAR DATOS PARA USAR EN confirmarSubida
             this.datosSubida = {
                 archivo: archivo,
                 tipoSeleccionado: tipoSeleccionado,
@@ -252,14 +267,14 @@ class ClassImagenes {
         });
     }
 
-    // ✅ MÉTODO PARA CONFIRMAR LA SUBIDA
+    // MÉTODO PARA CONFIRMAR LA SUBIDA
     confirmarSubida() {
         console.log('=== CONFIRMANDO SUBIDA ===');
         
         // Cerrar diálogo de confirmación
         this.clsdialg_wndDialogo.close();
 
-        // ✅ USAR DATOS GUARDADOS
+        // USAR DATOS GUARDADOS
         if (!this.datosSubida) {
             alert('Error: No se encontraron los datos de la imagen a subir.');
             return;
@@ -321,7 +336,7 @@ class ClassImagenes {
         });
     }
 
-    // ✅ MÉTODO MEJORADO PARA LIMPIAR FORMULARIO
+    // MÉTODO MEJORADO PARA LIMPIAR FORMULARIO
     limpiarFormulario() {
         console.log('Limpiando formulario...');
         
@@ -330,7 +345,7 @@ class ClassImagenes {
             this.miFileBox.clear();
         }
         
-        // ✅ ESTABLECER VALOR POR DEFECTO EN LUGAR DE LIMPIAR
+        // ESTABLECER VALOR POR DEFECTO EN LUGAR DE LIMPIAR
         this.clsimg_dlltipo.setValue('CEL');
         
         // Limpiar contenedor de imagen
@@ -340,7 +355,7 @@ class ClassImagenes {
         }
     }
 
-    // ✅ MÉTODO PARA OBTENER PRÓXIMO CORRELATIVO
+    // MÉTODO PARA OBTENER PRÓXIMO CORRELATIVO
     obtenerProximoCorrelativo(callback) {
         $.ajax({
             url: "https://sistema.easyenvios.com/dmenvios/index.php/conimagenes/obtenerCorrelativo",
@@ -419,65 +434,61 @@ class ClassImagenes {
     }
 
     limpiarFormularioCompleto() {
-    console.log('Limpiando formulario completo...');
-    
-    try {
-        // ✅ 1. Limpiar FileBox (campo de archivo)
-        if (this.miFileBox && typeof this.miFileBox.clear === 'function') {
-            this.miFileBox.clear();
-            console.log('FileBox limpiado con método clear()');
-        }
+        console.log('Limpiando formulario completo...');
         
-        // ✅ 2. Limpiar manualmente el input del archivo (método alternativo)
-        const inputArchivo = document.getElementById('clsimg_filearchivo');
-        if (inputArchivo) {
-            inputArchivo.value = '';
-            console.log('Input de archivo limpiado manualmente');
-            
-            // Si es un filebox de EasyUI, también limpiarlo así:
-            try {
-                $('#clsimg_filearchivo').filebox('clear');
-                console.log('Filebox EasyUI limpiado');
-            } catch (e) {
-                console.log('No se pudo limpiar filebox EasyUI:', e.message);
-            }
-        }
-        
-        // ✅ 3. Limpiar contenedor de imagen
-        const contenedorImagen = document.getElementById('contenedorImagen');
-        if (contenedorImagen) {
-            contenedorImagen.innerHTML = '';
-            console.log('Contenedor de imagen limpiado');
-        }
-        
-        // ✅ 4. Restablecer valor por defecto del combo
-        if (this.clsimg_dlltipo) {
-            this.clsimg_dlltipo.setValue('CEL');
-            console.log('Combo restablecido a valor por defecto: CEL');
-        }
-        
-        // ✅ 5. Limpiar cualquier datos temporales guardados
-        this.datosSubida = null;
-        console.log('Datos temporales limpiados');
-        
-        console.log('✅ Formulario limpiado completamente');
-        
-    } catch (error) {
-        console.error('Error al limpiar formulario:', error);
-        // Intentar limpiar al menos lo básico
         try {
-            document.getElementById('contenedorImagen').innerHTML = '';
-            document.getElementById('clsimg_filearchivo').value = '';
-        } catch (e) {
-            console.error('Error crítico al limpiar:', e);
+            // ✅ 1. Limpiar FileBox (campo de archivo)
+            if (this.miFileBox && typeof this.miFileBox.clear === 'function') {
+                this.miFileBox.clear();
+                console.log('FileBox limpiado con método clear()');
+            }
+            
+            // ✅ 2. Limpiar manualmente el input del archivo (método alternativo)
+            const inputArchivo = document.getElementById('clsimg_filearchivo');
+            if (inputArchivo) {
+                inputArchivo.value = '';
+                console.log('Input de archivo limpiado manualmente');
+                
+                // Si es un filebox de EasyUI, también limpiarlo así:
+                try {
+                    $('#clsimg_filearchivo').filebox('clear');
+                    console.log('Filebox EasyUI limpiado');
+                } catch (e) {
+                    console.log('No se pudo limpiar filebox EasyUI:', e.message);
+                }
+            }
+            
+            // ✅ 3. Limpiar contenedor de imagen
+            const contenedorImagen = document.getElementById('contenedorImagen');
+            if (contenedorImagen) {
+                contenedorImagen.innerHTML = '';
+                console.log('Contenedor de imagen limpiado');
+            }
+            
+            // ✅ 4. Restablecer valor por defecto del combo
+            if (this.clsimg_dlltipo) {
+                this.clsimg_dlltipo.setValue('CEL');
+                console.log('Combo restablecido a valor por defecto: CEL');
+            }
+            
+            // ✅ 5. Limpiar cualquier datos temporales guardados
+            this.datosSubida = null;
+            console.log('Datos temporales limpiados');
+            
+            console.log('✅ Formulario limpiado completamente');
+            
+        } catch (error) {
+            console.error('Error al limpiar formulario:', error);
+            // Intentar limpiar al menos lo básico
+            try {
+                document.getElementById('contenedorImagen').innerHTML = '';
+                document.getElementById('clsimg_filearchivo').value = '';
+            } catch (e) {
+                console.error('Error crítico al limpiar:', e);
+            }
         }
     }
 }
-}
-
-
-
-
 
 $(document).ready(function() {
     const clsImagenes = ClassImagenes.getInstance();
