@@ -53,23 +53,7 @@ class ClassImagenes {
         this.clsimg_bntaceptar = new LinkButton('clsimg_bntaceptar', {text: 'Subir',iconCls: 'icon-save',iconAlign: 'left',height: 25,width: 150,onClick: () => {
             this.subirImagen();
         }});
-        
-        this.clsDialog_bntaceptar = new LinkButton('clsDialog_bntaceptar', {text: 'Confirmar',iconCls: 'icon-save',iconAlign: 'left',height: 25, width: 150,onClick: () => {
-            this.confirmarSubida();
-            this.clsdialg_wndDialogo.center();
-        }});
-        
-        //BOTÓN CANCELAR DEL DIÁLOGO 
-        this.clsDialog_bntcancelar = new LinkButton('clsDialog_bntcancelar', {text: 'Cancelar',iconCls: 'icon-reload',iconAlign: 'left',height: 25,width: 150, onClick: () => {
-            //LIMPIAR FORMULARIO COMPLETO
-            this.limpiarFormularioCompleto();
-            
-            //CERRAR EL DIÁLOGO
-            this.clsdialg_wndDialogo.close();
-        }});
-        
         // VENTANAS
-        this.clsdialg_wndDialogo = new EasyUIWindow('clsdialg_wndDialogo', {title: ' Confirmar subida',iconCls: 'icon-load',width: '350',height: '200', maximizable: false,onClose: function() {},onOpen: function() {}});
         this.clsimg_wndsubirimagen = new EasyUIWindow('clsimg_wndsubirimagen', {title: ' Subir imagenes',iconCls: 'icon-load',width: '650',height: '330',maximizable: false,onClose: function() {},onOpen: function() {ClassImagenes.getInstance().clsimg_dlltipo.setValue('CEL');}});
         this.clsimg_btnmostrar = new LinkButton('clsimg_btnmostrar', {text: 'Cargar Imagenes',iconCls: 'icon-reload',iconAlign: 'left',height: 25,width: 150,onClick: () => {this.jsmostrarimagen();}});
         
@@ -176,166 +160,232 @@ class ClassImagenes {
     }
 
 
-    //MÉTODO MEJORADO PARA VALIDAR Y SUBIR IMAGEN
-    subirImagen() {
-        console.log('=== INICIANDO VALIDACIONES ===');
+ //MÉTODO MEJORADO PARA VALIDAR Y SUBIR IMAGEN (SIN DIÁLOGO)
+subirImagen() {
+    console.log('=== INICIANDO VALIDACIONES ===');
 
-        // VALIDACIÓN DEL ARCHIVO
-        const archivos = this.miFileBox.getFiles();
-        console.log('Archivos encontrados:', archivos);
-        
-        if (!archivos || archivos.length === 0) {
-            alert('Por favor selecciona una imagen antes de subir.');
-            return;
-        }
+    // VALIDACIÓN DEL ARCHIVO
+    const archivos = this.miFileBox.getFiles();
+    console.log('Archivos encontrados:', archivos);
+    
+    if (!archivos || archivos.length === 0) {
+        alert('Por favor selecciona una imagen antes de subir.');
+        return;
+    }
 
-        // VALIDACIÓN DEL TIPO CON DEBUG MEJORADO
-        const tipoSeleccionado = this.clsimg_dlltipo.getValue();
-        console.log('Tipo seleccionado (getValue()):', tipoSeleccionado);
-        console.log('Tipo de dato:', typeof tipoSeleccionado);
-        console.log('Es vacío?:', !tipoSeleccionado);
+    // VALIDACIÓN DEL TIPO CON DEBUG MEJORADO
+    const tipoSeleccionado = this.clsimg_dlltipo.getValue();
+    console.log('Tipo seleccionado (getValue()):', tipoSeleccionado);
+    console.log('Tipo de dato:', typeof tipoSeleccionado);
+    console.log('Es vacío?:', !tipoSeleccionado);
+    
+    // VALIDACIÓN MÁS ROBUSTA
+    if (!tipoSeleccionado || tipoSeleccionado === '' || tipoSeleccionado === null || tipoSeleccionado === undefined) {
+        console.log('ERROR: No hay tipo seleccionado');
         
-        // VALIDACIÓN MÁS ROBUSTA
-        if (!tipoSeleccionado || tipoSeleccionado === '' || tipoSeleccionado === null || tipoSeleccionado === undefined) {
-            console.log('ERROR: No hay tipo seleccionado');
+        // INTENTAR OBTENER EL VALOR DE OTRA FORMA
+        const valorAlternativo = $('#clsimg_dlltipo').combobox('getValue');
+        console.log('Valor alternativo:', valorAlternativo);
+        
+        if (!valorAlternativo) {
+            // ESTABLECER VALOR POR DEFECTO Y CONTINUAR
+            console.log('Estableciendo valor por defecto: CEL');
+            this.clsimg_dlltipo.setValue('CEL');
             
-            // INTENTAR OBTENER EL VALOR DE OTRA FORMA
-            const valorAlternativo = $('#clsimg_dlltipo').combobox('getValue');
-            console.log('Valor alternativo:', valorAlternativo);
-            
-            if (!valorAlternativo) {
-                // ESTABLECER VALOR POR DEFECTO Y CONTINUAR
-                console.log('Estableciendo valor por defecto: CEL');
-                this.clsimg_dlltipo.setValue('CEL');
+            // ESPERAR UN MOMENTO Y VERIFICAR NUEVAMENTE
+            setTimeout(() => {
+                const nuevoValor = this.clsimg_dlltipo.getValue();
+                console.log('Nuevo valor después del setValue:', nuevoValor);
                 
-                // ESPERAR UN MOMENTO Y VERIFICAR NUEVAMENTE
-                setTimeout(() => {
-                    const nuevoValor = this.clsimg_dlltipo.getValue();
-                    console.log('Nuevo valor después del setValue:', nuevoValor);
-                    
-                    if (!nuevoValor) {
-                        alert('Error: No se pudo seleccionar el tipo de imagen. Por favor, selecciona manualmente un tipo de la lista desplegable.');
-                        return;
-                    }
-                    
-                    // Continuar con la subida
-                    this.continuarSubida(nuevoValor, archivos[0]);
-                }, 100);
-                return;
-            } else {
-                this.continuarSubida(valorAlternativo, archivos[0]);
-                return;
-            }
-        }
-
-        console.log('Validaciones pasadas, continuando...');
-        this.continuarSubida(tipoSeleccionado, archivos[0]);
-    }
-
-    // MÉTODO SEPARADO PARA CONTINUAR CON LA SUBIDA
-    continuarSubida(tipoSeleccionado, archivo) {
-        console.log('Continuando subida con tipo:', tipoSeleccionado);
-        
-        // OBTENER CORRELATIVO Y MOSTRAR DATOS EN EL DIÁLOGO
-        this.obtenerProximoCorrelativo((proximoCorrelativo) => {
-            // MOSTRAR DATOS EN EL DIÁLOGO
-            const datosParaMostrar = `
-                <div style="margin-bottom: 15px;">
-                    <strong>¿Deseas subir la foto seleccionada?</strong>
-                </div>
-                <div style="background: #f0f0f0; padding: 10px; border-radius: 5px; font-family: monospace; font-size: 12px; text-align: left;">
-                    <div><strong>📁 Archivo:</strong> ${archivo.name}</div>
-                    <div><strong>📋 Tipo:</strong> ${tipoSeleccionado} (${this.obtenerNombreTipo(tipoSeleccionado)})</div>
-                    <div><strong>🔢 Correlativo:</strong> ${proximoCorrelativo}</div>
-                    <div><strong>📊 Tamaño:</strong> ${this.formatearTamano(archivo.size)}</div>
-                </div>
-            `;
-            
-            // ACTUALIZAR CONTENIDO DEL DIÁLOGO
-            $('#clsdialg_wndDialogo').html(datosParaMostrar);
-            
-            // GUARDAR DATOS PARA USAR EN confirmarSubida
-            this.datosSubida = {
-                archivo: archivo,
-                tipoSeleccionado: tipoSeleccionado,
-                proximoCorrelativo: proximoCorrelativo
-            };
-            
-            // Mostrar diálogo de confirmación
-            this.clsdialg_wndDialogo.center();
-            this.clsdialg_wndDialogo.open();
-        });
-    }
-
-    // MÉTODO PARA CONFIRMAR LA SUBIDA
-    confirmarSubida() {
-        console.log('=== CONFIRMANDO SUBIDA ===');
-        
-        // Cerrar diálogo de confirmación
-        this.clsdialg_wndDialogo.close();
-
-        // USAR DATOS GUARDADOS
-        if (!this.datosSubida) {
-            alert('Error: No se encontraron los datos de la imagen a subir.');
+                if (!nuevoValor) {
+                    alert('Error: No se pudo seleccionar el tipo de imagen. Por favor, selecciona manualmente un tipo de la lista desplegable.');
+                    return;
+                }
+                
+                // Continuar directamente con confirmarSubida
+                this.continuarSubida(nuevoValor, archivos[0]);
+            }, 100);
+            return;
+        } else {
+            this.continuarSubida(valorAlternativo, archivos[0]);
             return;
         }
-
-        const { archivo, tipoSeleccionado, proximoCorrelativo } = this.datosSubida;
-
-        console.log('Datos a enviar:');
-        console.log('- Archivo:', archivo.name);
-        console.log('- Tipo:', tipoSeleccionado);
-        console.log('- Correlativo:', proximoCorrelativo);
-
-        // Preparar FormData
-        const formData = new FormData();
-        formData.append('archivo', archivo);
-        formData.append('ciacodigo', '11');
-        formData.append('barcode', '00300250506000004');
-        formData.append('tipo', tipoSeleccionado);
-        formData.append('correlativo', proximoCorrelativo);
-
-        // Realizar petición AJAX
-        $.ajax({
-            url: "https://sistema.easyenvios.com/dmenvios/index.php/conimagenes/subirImagen",
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            success: (response) => {
-                try {
-                    const data = typeof response === 'string' ? eval('(' + response + ')') : response;
-                    
-                    if (data.success || data.estado === 'OK') {
-                        alert('Imagen subida correctamente');
-                        
-                        // Limpiar datos guardados
-                        this.datosSubida = null;
-                        
-                        // Cerrar ventana
-                        this.clsimg_wndsubirimagen.close();
-                        
-                        // Limpiar formulario
-                        this.limpiarFormulario();
-                        
-                        // Recargar imágenes
-                        this.jsmostrarimagen();
-                        
-                    } else {
-                        alert('Error al subir la imagen: ' + (data.mensaje || 'Error desconocido'));
-                    }
-                } catch (e) {
-                    console.error('Error al procesar respuesta:', e);
-                    alert('Error al procesar la respuesta del servidor');
-                }
-            },
-            error: (jqXHR, textStatus, errorThrown) => {
-                console.error("Error en upload:", errorThrown);
-                alert('Error al subir la imagen: ' + errorThrown);
-            }
-        });
     }
 
+    console.log('Validaciones pasadas, continuando...');
+    this.continuarSubida(tipoSeleccionado, archivos[0]);
+}
+
+// MÉTODO SEPARADO PARA CONTINUAR CON LA SUBIDA (SIN DIÁLOGO)
+continuarSubida(tipoSeleccionado, archivo) {
+    console.log('Continuando subida con tipo:', tipoSeleccionado);
+    
+    // OBTENER CORRELATIVO Y PROCEDER DIRECTAMENTE A CONFIRMAR SUBIDA
+    this.obtenerProximoCorrelativo((proximoCorrelativo) => {
+        console.log('Correlativo obtenido:', proximoCorrelativo);
+        
+        // LLAMAR DIRECTAMENTE A confirmarSubida CON LOS DATOS
+        this.confirmarSubida(archivo, tipoSeleccionado, proximoCorrelativo);
+    });
+}
+
+// MÉTODO PARA CONFIRMAR LA SUBIDA (MODIFICADO PARA RECIBIR PARÁMETROS)
+confirmarSubida(archivo, tipoSeleccionado, proximoCorrelativo) {
+    console.log('=== CONFIRMANDO SUBIDA ===');
+    
+    // VALIDAR QUE SE RECIBIERON LOS PARÁMETROS
+    if (!archivo || !tipoSeleccionado || !proximoCorrelativo) {
+        alert('Error: Faltan datos para procesar la imagen.');
+        console.error('Datos faltantes:', { archivo, tipoSeleccionado, proximoCorrelativo });
+        return;
+    }
+
+    console.log('Datos a enviar:');
+    console.log('- Archivo:', archivo.name);
+    console.log('- Tipo:', tipoSeleccionado);
+    console.log('- Correlativo:', proximoCorrelativo);
+
+    // Preparar FormData
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+    formData.append('ciacodigo', '11');
+    formData.append('barcode', '00300250506000004');
+    formData.append('tipo', tipoSeleccionado);
+    formData.append('correlativo', proximoCorrelativo);
+
+    // Realizar petición AJAX
+    $.ajax({
+        url: "https://sistema.easyenvios.com/dmenvios/index.php/conimagenes/subirImagen",
+        type: 'POST',
+        timeout: 15000,
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: (response) => {
+            try {
+                const data = typeof response === 'string' ? eval('(' + response + ')') : response;
+                
+                if (data.success || data.estado === 'OK') {
+                    alert('Imagen subida correctamente');
+                    
+                    // Cerrar ventana
+                    this.clsimg_wndsubirimagen.close();
+                    
+                    // Limpiar formulario
+                    this.limpiarFormulario();
+                    
+                    // Recargar imágenes
+                    this.jsmostrarimagen();
+
+                    //Se va limpiar despues de que se ha subido la foto
+                    this.limpiarFormularioCompleto();
+                } else {
+                    alert('Error al subir la imagen: ' + (data.mensaje || 'Error desconocido'));
+
+                    
+                }
+            } catch (e) {
+                console.error('Error al procesar respuesta:', e);
+                alert('Error al procesar la respuesta del servidor');
+            }
+        },
+     error: (jqXHR, textStatus, errorThrown) => {
+    let mensajeError = 'Error al subir la imagen: ';
+    
+    // LOGGING DETALLADO PARA DEBUGGING
+    console.log('=== DETALLES DEL ERROR ===');
+    console.log('jqXHR.status:', jqXHR.status);
+    console.log('jqXHR.statusText:', jqXHR.statusText);
+    console.log('jqXHR.responseText:', jqXHR.responseText);
+    console.log('textStatus:', textStatus);
+    console.log('errorThrown:', errorThrown);
+    console.log('jqXHR.readyState:', jqXHR.readyState);
+    console.log('===============================');
+    
+    // EVALUAR ERRORES EN ORDEN DE PRIORIDAD CORRECTO
+    
+    // 1. ERRORES HTTP ESPECÍFICOS PRIMERO (404, 500, etc.)
+    if (jqXHR.status === 404) {
+        mensajeError += 'URL no encontrada (404). Verifica la ruta del servidor.';
+        mensajeError += '\nURL actual: ' + this.obtenerUrlActual();
+    } 
+    else if (jqXHR.status === 500) {
+        mensajeError += 'Error interno del servidor (500).';
+        if (jqXHR.responseText) {
+            mensajeError += '\nDetalle: ' + jqXHR.responseText.substring(0, 100);
+        }
+    }
+    else if (jqXHR.status === 403) {
+        mensajeError += 'Acceso denegado (403). Verifica permisos.';
+    }
+    else if (jqXHR.status === 413) {
+        mensajeError += 'Archivo demasiado grande (413). Reduce el tamaño de la imagen.';
+    }
+    else if (jqXHR.status === 415) {
+        mensajeError += 'Tipo de archivo no soportado (415).';
+    }
+    
+    // 2. TIMEOUT ESPECÍFICO
+    else if (textStatus === 'timeout') {
+        mensajeError += 'El servidor no respondió a tiempo (timeout).';
+        mensajeError += '\nIntenta con una imagen más pequeña o verifica la conexión.';
+    }
+    
+    // 3. ERRORES DE PARSING/PARSERERROR
+    else if (textStatus === 'parsererror') {
+        mensajeError += 'Error al procesar la respuesta del servidor.';
+        mensajeError += '\nRespuesta: ' + (jqXHR.responseText || 'Sin respuesta').substring(0, 100);
+    }
+    
+    // 4. ABORT (petición cancelada)
+    else if (textStatus === 'abort') {
+        mensajeError += 'La petición fue cancelada.';
+    }
+    
+    // 5. STATUS 0 - EVALUAR MÚLTIPLES CAUSAS
+    else if (jqXHR.status === 0) {
+        // Status 0 puede ser por múltiples razones
+        
+        if (textStatus === 'error') {
+            // Verificar si es realmente un problema de conectividad
+            if (navigator.onLine === false) {
+                mensajeError += 'Sin conexión a internet.';
+            } else {
+                // Conectado pero no puede alcanzar el servidor
+                mensajeError += 'No se puede conectar al servidor.';
+                mensajeError += '\nPosibles causas:';
+                mensajeError += '\n• URL incorrecta o servidor inaccesible';
+                mensajeError += '\n• Problemas de CORS';
+                mensajeError += '\n• Firewall/proxy bloqueando la conexión';
+                mensajeError += '\n• Servidor temporalmente fuera de línea';
+            }
+        } else {
+            mensajeError += 'Error de conexión (status 0).';
+            mensajeError += '\nTextStatus: ' + textStatus;
+        }
+    }
+    
+    // 6. OTROS ERRORES HTTP
+    else if (jqXHR.status >= 400 && jqXHR.status < 500) {
+        mensajeError += `Error del cliente (${jqXHR.status}): ${jqXHR.statusText}`;
+    }
+    else if (jqXHR.status >= 500) {
+        mensajeError += `Error del servidor (${jqXHR.status}): ${jqXHR.statusText}`;
+    }
+    
+    // 7. ERRORES DESCONOCIDOS
+    else {
+        mensajeError += `Error desconocido (${jqXHR.status}): ${errorThrown || 'Sin descripción'}`;
+        if (jqXHR.responseText) {
+            mensajeError += '\nRespuesta: ' + jqXHR.responseText.substring(0, 100);
+        }
+    }
+    
+    console.error("Mensaje final:", mensajeError);
+    alert(mensajeError);
+},
+    });
+}
     // MÉTODO MEJORADO PARA LIMPIAR FORMULARIO
     limpiarFormulario() {
         console.log('Limpiando formulario...');

@@ -36,13 +36,6 @@
 		<div id="clsimg_bntaceptar" class="link-button"></div>
 		<div id="clsimg_bntcancelar" class="link-button"></div>
 		<div id="clsimg_bntterminar" class="link-button"></div>	
-		<div id="clsdialg_wndDialogo" style="padding:0px; display:none;" footer="#footer_clsdialg_wndDialogo">
-			¿Deseas subir la foto seleccionada?
-			<div id="footer_clsdialg_wndDialogo" style="padding:5px;text-align:center;">
-				<div id="clsDialog_bntaceptar" class="link-button"></div>
-				<div id="clsDialog_bntcancelar" class="link-button"></div>
-			</div>
-		</div>
 	</div>
 </div>
 <!-- Fin del window para subir imagenes-->
