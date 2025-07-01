@@ -23,7 +23,6 @@ class ClassImagenes {
         }
         return ClassImagenes.instance;
     }
-
     initialize() {
         // INICIALIZAR COMBOBOX PRIMERO CON VALOR POR DEFECTO
         var paises = [
@@ -31,8 +30,7 @@ class ClassImagenes {
             { idpais: 'INGR', nompais: 'INGRESO' },
             { idpais: 'DEV', nompais: 'DEVOLUCION' },
             { idpais: 'SAL', nompais: 'GUIA DE SALIDA' }
-        ];
-        
+        ];        
         this.clsimg_dlltipo = new EasyComboBox('clsimg_dlltipo', {
             width: 150,
             valueField: 'idpais',
@@ -45,7 +43,6 @@ class ClassImagenes {
                 console.log('Tipo seleccionado:', record.idpais, '-', record.nompais);
             }
         });
-
         // FILEBOX
         this.miFileBox = new EasyUIFileBox('clsimg_filearchivo', {accept: 'image/*',maxSize: 5 * 1024 * 1024, allowedExtensions: ['jpg', 'jpeg', 'png', 'gif'], onChange: (value, files) => {             
             if (files && files.length > 0) {this.miFileBox.displayImage('contenedorImagen'); }}});
@@ -63,7 +60,7 @@ class ClassImagenes {
         this.clsimg_btnmostrar = new LinkButton('clsimg_btnmostrar', {text: 'Cargar Imagenes',iconCls: 'icon-reload',iconAlign: 'left',height: 25,width: 150,onClick: () => {this.jsmostrarimagen();}});
         
         // BOTÓN SUBIR (QUE ABRE LA VENTANA) 
-        this.clsimg_subirimagen = new LinkButton('clsimg_subirimagen', {text: 'Subir',iconCls: 'icon-save',iconAlign: 'left',height: 25,width: 80,onClick: () => {
+        this.clsimg_subirimagen = new LinkButton('clsimg_subirimagen', {text: 'Subir',iconCls: 'icon-save', disabled:true, iconAlign: 'left',height: 25,width: 80,onClick: () => {
             // LIMPIAR FORMULARIO ANTES DE ABRIR LA VENTANA
             this.limpiarFormularioCompleto();
             
@@ -83,15 +80,12 @@ jsmostrarimagen() {
     // ✅ GUARDAR DATOS GLOBALES para usar en confirmDelete
     this.datosAPI = { 
         ciacodigo: '9', 
-        barcode: '00100999658000009',
-        barra: '001-00999658-000009' // ✅ Añadir el formato de barra
-    };
-    
-    var strUrl = "https://sistema.easyenvios.com/dmenvios/index.php/conimagenes/bdregimagenes";
-    
+        barcode: '00100999658000012',
+        barra: '001-00999658-000012' // ✅ Añadir el formato de barra
+    };    
+    var strUrl = "https://sistema.easyenvios.com/dmenvios/index.php/conimagenes/bdregimagenes";    
     console.log('URL:', strUrl);
-    console.log('Datos:', this.datosAPI);
-    
+    console.log('Datos:', this.datosAPI);    
     $.ajax({
         url: strUrl,
         type: 'GET',
@@ -186,7 +180,7 @@ generarContenidoImagenes(data) {
             tipoimagen: tipo
         };
         
-        contenido += '<button class="btn-delete" style="float: right; background: #ff4444; color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 10px;" title="Eliminar imagen" onclick="ClassImagenes.getInstance().confirmDelete(' + "'" + encodeURIComponent(JSON.stringify(datosEliminar)) + "'" + ')">❌</button>';
+        contenido += '<button class="btn-delete" style="float: right; background: #ff4444; color: white; border: none; border-radius: 3px; padding: 2px 6px; cursor: pointer; font-size: 10px;" title="Eliminar imagen" onclick="ClassImagenes.getInstance().preparaeliminar(' + "'" + encodeURIComponent(JSON.stringify(datosEliminar)) + "'" + ')">❌</button>';
         
         contenido += '<small style="color: #666; font-size: 10px; display: block; margin-top: 20px;">' + tipo + '</small>';
         contenido += '</div>';
@@ -249,7 +243,7 @@ generarMensajeError(jqXHR, textStatus, errorThrown) {
 }
 
 // ✅ MÉTODO DE PRUEBA para verificar conectividad
-probarConectividad() {
+probarConectividad(datosImagenCodificados) {
     console.log('🔍 Probando conectividad...');
     
     // Probar diferentes URLs
@@ -276,163 +270,105 @@ probarConectividad() {
         });
     });
 }
+async eliminaimagen(datosImagenCodificados){debugger;
+        try {    
+             
+        const strUrl = "https://sistema.easyenvios.com/dmenvios/index.php/conimagenes/bdeliminar_imagencargo";               
+        // Mostrar indicador de carga si existe
+        /*if (typeof showAnimation === 'function') {
+               showAnimation();                
+        }    */
+        const datosImagen = JSON.parse(decodeURIComponent(datosImagenCodificados));
+        const datosEliminar = this.generarDatosEliminacion(datosImagen);
+        const response = await $.ajax({
+            url: strUrl,
+            type: 'POST',
+            data: datosEliminar,
+            dataType: 'json' // Especificar que esperamos JSON
+        });
+            // Ocultar indicador de carga si existe
+            /*if (typeof stopAnimation === 'function') {
+                stopAnimation();               
+            }*/
+             // Validar la respuesta
+            if (!response || typeof response !== 'object') {
+                throw new Error('Respuesta del servidor no válida');               
+            }
+            const result = Array.isArray(response) ? response[0] : response;
+            if (result && result.msgcod)
+            {
+                switch(result.msgcod.trim()) {
+                case 'EXITO':                    
+                    $.messager.show({title:'Éxito',msg:result.msgdes,showType:'show',});
+                    return true;
+                    break;
+                default:
+                    $.messager.alert('Fallo', result.msgdes, 'info');
+                    return false;
+                    break;
+                }
+            
+            }else
+            {
+                throw new Error('Respuesta del servidor no válida'); 
+                return false;
+            }        
+        }// fin try 
+        catch (error) {  
+             // Ocultar indicador de carga si existe
+            /*if (typeof stopAnimation === 'function') {
+                stopAnimation();
+            }*/
+            //console.error('Error en guardar:', error);
+            const errorMessage = error.responseText 
+                ? `Error: ${error.responseText}`
+                : `Error en la operación: ${error.message || 'Error desconocido'}`;            
+             $.messager.show({title:'Fallo',msg:errorMessage,showType:'show',});
 
-async confirmDelete(datosImagenCodificados) {
-    // 1. Verificar datos
-    if (!datosImagenCodificados) {
-        console.error('Datos de imagen no proporcionados');
-        return;
+            return false;
+        }        
     }
 
-    // 2. Obtener referencia al botón antes de cualquier operación
-    const originalButton = event.target;
-    
-    try {
-        // 3. Cambiar estado del botón inmediatamente
-        originalButton.disabled = true;
-        originalButton.innerHTML = '⏳ Eliminando...';
-        originalButton.style.backgroundColor = '#cccccc';
-        
-        // 4. Mostrar confirmación (después de cambiar el botón)
-        const datosImagen = JSON.parse(decodeURIComponent(datosImagenCodificados));
-        const confirmMessage = [
+
+async preparaeliminar(datosImagenCodificados) {debugger;
+
+
+       // 4. Mostrar confirmación (después de cambiar el botón)
+    const datosImagen = JSON.parse(decodeURIComponent(datosImagenCodificados));
+    const confirmMessage = [
             `¿Está seguro que desea eliminar esta imagen?`,
             `\n• Tipo: ${datosImagen.tipoimagen}`,
             `• Sucursal: ${datosImagen.succodigo}`,
             `• OS: ${datosImagen.osenumero}`,
             `• Correlativo: ${datosImagen.osccorrelativo}`
-        ].join('\n');
+    ].join('\n');
 
-        if (!confirm(confirmMessage)) {
-            originalButton.innerHTML = '❌ Eliminado';
-            originalButton.style.backgroundColor = '#ff4444';
-            originalButton.disabled = false;
-            return;
-        }
 
-        // 5. Realizar eliminación
-        const datosEliminar = this.generarDatosEliminacion(datosImagen);
-        const response = await fetch(
-        "https://sistema.easyenvios.com/dmenvios/index.php/conimagenes/bdeliminar_imagencargo", 
-        {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(datosEliminar)
+    let confirmado;    
+    confirmado= await this.confirmar('Eliminación', confirmMessage);
+    if (confirmado) 
+    {
+        const leliminado = await this.eliminaimagen(datosImagenCodificados);
+        if (leliminado==true)
+        {// recarga nuevamente la lista de imagenes.
+            this.jsmostrarimagen();
         }
-    );
+    }
 
-    const data = await response.json();
-    
-    // 6. Manejar respuesta - MODIFICADO PARA ADAPTARSE A LA API
-    if (Array.isArray(data) && data.length > 0 && data[0].msgcod === "EXITO") {
-        // Mostrar alerta de éxito primero
-        alert('✅ ' + data[0].msgdes); // Usar el mensaje de la API
-        
-        // Luego recargar
-        this.jsmostrarimagen();
-        
-        // Cambiar estado del botón
-        originalButton.innerHTML = '✅ Eliminado';
-        setTimeout(() => {
-            originalButton.style.display = 'none'; // Ocultar botón después de eliminar
-        }, 1000);
-    } else {
-        const errorMsg = Array.isArray(data) && data.length > 0 
-            ? data[0].msgdes 
-            : 'La imagen no pudo ser eliminada';
-        throw new Error(errorMsg);
-    }
-            
-    }  catch (error) {
-    console.error('Error en eliminación:', error);
-    
-    // Restaurar botón
-    originalButton.innerHTML = '❌ Error';
-    originalButton.style.backgroundColor = '#ff4444';
-    
-    setTimeout(() => {
-        originalButton.innerHTML = '❌ Eliminar';
-        originalButton.style.backgroundColor = '#ff4444';
-        originalButton.disabled = false;
-    }, 2000);
-    
-    // Generar mensaje de error amigable según el tipo de error
-    let mensajeError = '❌ Ocurrió un error al intentar eliminar la imagen:\n\n';
-    
-    // Detección mejorada de tipos de error
-    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
-        // Error de conexión o URL incorrecta
-        mensajeError += '🔌 Problema de conexión o URL incorrecta:\n';
-        mensajeError += '- Verifica tu conexión a internet\n';
-        mensajeError += '- La URL del servicio puede ser incorrecta\n';
-        mensajeError += '- El servidor podría estar temporalmente fuera de línea\n';
-        mensajeError += '- Si estás en una red corporativa, verifica con tu departamento de TI';
-    } 
-    else if (error.name === 'AbortError') {
-        // Solicitud cancelada o abortada
-        mensajeError += '⏹ Solicitud cancelada:\n';
-        mensajeError += '- La operación fue interrumpida o cancelada';
-    }
-    else if (error.message.includes('NetworkError') || error.message.includes('Network request failed')) {
-        // Error de red genérico
-        mensajeError += '📡 Error de red:\n';
-        mensajeError += '- Problema con la conexión de red\n';
-        mensajeError += '- Verifica tu conexión a internet\n';
-        mensajeError += '- El servidor puede no estar disponible';
-    }
-    else if (error.response) {
-        // Error con respuesta del servidor (axios/fetch)
-        const status = error.response.status;
-        
-        if (status === 404) {
-            mensajeError += '🔍 Recurso no encontrado (404):\n';
-            mensajeError += '- La imagen o el endpoint de eliminación no existe\n';
-            mensajeError += '- Verifica que la URL sea correcta';
-        }
-        else if (status === 401 || status === 403) {
-            mensajeError += '🔐 Problema de autenticación/permisos:\n';
-            mensajeError += '- No tienes permisos para eliminar esta imagen\n';
-            mensajeError += '- Tu sesión puede haber expirado';
-        }
-        else if (status === 500) {
-            mensajeError += '🖥️ Error interno del servidor (500):\n';
-            mensajeError += '- El servidor está experimentando problemas técnicos\n';
-            mensajeError += '- Por favor, intenta nuevamente más tarde';
-        }
-        else if (status >= 400 && status < 500) {
-            mensajeError += `⚠️ Error del cliente (${status}):\n`;
-            mensajeError += '- La solicitud contiene datos incorrectos\n';
-            mensajeError += '- Verifica los parámetros enviados';
-        }
-        else if (status >= 500) {
-            mensajeError += `⚠️ Error del servidor (${status}):\n`;
-            mensajeError += '- Problema en el servidor al procesar la solicitud';
-        }
-    }
-    else if (error.request) {
-        // La solicitud fue hecha pero no hubo respuesta
-        mensajeError += '🔄 No se recibió respuesta del servidor:\n';
-        mensajeError += '- El servidor puede estar sobrecargado\n';
-        mensajeError += '- Verifica tu conexión a internet\n';
-        mensajeError += '- Intenta nuevamente más tarde';
-    }
-    else if (error.message.includes('timeout') || error.name === 'TimeoutError') {
-        // Timeout
-        mensajeError += '⏳ Tiempo de espera agotado:\n';
-        mensajeError += '- El servidor tardó demasiado en responder\n';
-        mensajeError += '- Intenta nuevamente con una conexión más estable';
-    }
-    else {
-        // Error genérico
-        mensajeError += '⚠️ Error inesperado:\n';
-        mensajeError += '- Detalles: ' + (error.message || 'Error desconocido');
-    }
-    
-    // Mostrar mensaje final
-    mensajeError += '\n\nℹ️ Si el problema persiste, contacta al soporte técnico.';
-    alert(mensajeError);
+    // 3. Cambiar estado del botón inmediatamente
+//        originalButton.disabled = true;
+//        originalButton.innerHTML = '⏳ Eliminando...';
+//        originalButton.style.backgroundColor = '#cccccc';
+  
 }
-}
+
+confirmar(titulo, mensaje) {
+        return new Promise((resolve) => {
+            $.messager.confirm(titulo, mensaje, (r) => {
+                resolve(r);
+            });
+        });
+    }
 
 // ✅ MÉTODO AUXILIAR PARA GENERAR DATOS DE ELIMINACIÓN (reutilizable)
 generarDatosEliminacion(datosImagen) {

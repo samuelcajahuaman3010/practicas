@@ -7,7 +7,7 @@
     <link rel="stylesheet" type="text/css" href="../themes/icon.css">
     <script type="text/javascript" src="../jquery.min.js"></script>
 	<script type="text/javascript" src="../jquery.easyui.min.js"></script>
-    <script type="text/javascript" src="js/informe.js"></script>
+    <script type="text/javascript" src="js/jsvisorimagenes.js"></script>
     <script type="text/javascript" src="js/jsclasejquieryui.js"></script>
     <script type="text/javascript" src="../easyloader.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/viewerjs@1.11.6/dist/viewer.min.css">
@@ -21,7 +21,7 @@
 <div id="clsimg_panel">	
 	<div id="clsimg_subirimagen" class="link-button"></div>    
 	<div id="clsimg_ContentImage">
-    	<p style="text-align: center; color: #999; padding: 20px;"> Haz clic en "Mostrar Imagen" para cargar las imágenes</p>
+    	<p style="text-align: center; color: #999; padding: 20px;"> Panel para mostrar las imágenes</p>
 	</div>
 </div>
 <!-- Fin Panel -->
